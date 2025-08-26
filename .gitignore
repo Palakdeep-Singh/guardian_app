@@ -41,3 +41,4 @@ yarn-error.log*
 # firebase
 firebase-debug.log
 firestore-debug.lognode_modules/@next/swc-*/next-swc.*.node
+node_modules/@next/swc-*/next-swc.*.node
