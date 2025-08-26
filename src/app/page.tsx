@@ -12,17 +12,34 @@ import PowerChart from "@/components/dashboard/PowerChart";
 import { Progress } from "@/components/ui/progress";
 import { useAuth } from "@/hooks/use-auth";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 export default function DashboardPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
+  
+  const [accelerometer, setAccelerometer] = useState(0.98);
+  const [gyroscope, setGyroscope] = useState(3.2);
+  const [lidar, setLidar] =useState(12.5);
+  const [battery, setBattery] = useState(88);
 
   useEffect(() => {
     if (!loading && !user) {
       router.push('/login');
     }
   }, [user, loading, router]);
+  
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setAccelerometer(prev => parseFloat((prev + (Math.random() - 0.5) * 0.1).toFixed(2)));
+      setGyroscope(prev => parseFloat((prev + (Math.random() - 0.5) * 0.5).toFixed(1)));
+      setLidar(prev => parseFloat((prev + (Math.random() - 0.5) * 1).toFixed(1)));
+      setBattery(prev => Math.max(0, prev - 0.1));
+    }, 2000);
+
+    return () => clearInterval(interval);
+  }, []);
+
 
   if (loading || !user) {
     return <div className="p-4">Loading...</div>;
@@ -31,9 +48,9 @@ export default function DashboardPage() {
   return (
     <div className="p-4 space-y-4">
       <div className="grid gap-4 md:grid-cols-2 grid-cols-2">
-        <SensorCard icon={Gauge} title="Accelerometer" value="0.98g" />
-        <SensorCard icon={Zap} title="Gyroscope" value="3.2°/s" />
-        <SensorCard icon={Radar} title="LiDAR" value="12.5m" />
+        <SensorCard icon={Gauge} title="Accelerometer" value={`${accelerometer}g`} />
+        <SensorCard icon={Zap} title="Gyroscope" value={`${gyroscope}°/s`} />
+        <SensorCard icon={Radar} title="LiDAR" value={`${lidar}m`} />
         <SensorCard
           icon={Camera}
           title="Camera"
@@ -46,9 +63,9 @@ export default function DashboardPage() {
         <div className="space-y-2 mt-2">
           <div className="flex justify-between items-center text-sm">
             <span>Battery</span>
-            <span>88%</span>
+            <span>{battery.toFixed(0)}%</span>
           </div>
-          <Progress value={88} className="h-2" />
+          <Progress value={battery} className="h-2" />
         </div>
       </SensorCard>
 

@@ -1,9 +1,24 @@
+'use client';
 import Image from "next/image";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Route, MapPin, Share2, TrendingUp, Wind } from "lucide-react";
+import { useState, useEffect } from "react";
 
 export default function GpsPage() {
+    const [speed, setSpeed] = useState(45);
+    const [heading, setHeading] = useState("NW");
+    const headings = ["N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE", "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW"];
+
+    useEffect(() => {
+        const interval = setInterval(() => {
+            setSpeed(prev => Math.max(0, prev + Math.floor((Math.random() - 0.4) * 5)));
+            setHeading(headings[Math.floor(Math.random() * headings.length)]);
+        }, 3000);
+        return () => clearInterval(interval);
+    }, []);
+
+
   return (
     <div className="p-4 space-y-4">
       <Card>
@@ -38,7 +53,7 @@ export default function GpsPage() {
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">45 km/h</div>
+            <div className="text-2xl font-bold">{speed} km/h</div>
           </CardContent>
         </Card>
         <Card>
@@ -47,7 +62,7 @@ export default function GpsPage() {
             <Wind className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">NW</div>
+            <div className="text-2xl font-bold">{heading}</div>
           </CardContent>
         </Card>
       </div>

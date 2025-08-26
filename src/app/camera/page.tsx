@@ -14,6 +14,11 @@ export default function CameraPage() {
   const [hasCameraPermission, setHasCameraPermission] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const { toast } = useToast();
+  
+  const [speed, setSpeed] = useState(58);
+  const [heading, setHeading] = useState("NNE");
+  const headings = ["N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE", "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW"];
+
 
   useEffect(() => {
     const getCameraPermission = async () => {
@@ -38,6 +43,14 @@ export default function CameraPage() {
 
     getCameraPermission();
   }, [toast]);
+  
+  useEffect(() => {
+    const interval = setInterval(() => {
+        setSpeed(prev => Math.max(0, prev + Math.floor((Math.random() - 0.4) * 5)));
+        setHeading(headings[Math.floor(Math.random() * headings.length)]);
+    }, 3000);
+    return () => clearInterval(interval);
+  }, []);
 
   const toggleRecording = () => {
     setIsRecording((prev) => !prev);
@@ -120,7 +133,7 @@ export default function CameraPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold font-headline text-glow">
-              58 km/h
+              {speed} km/h
             </div>
           </CardContent>
         </Card>
@@ -131,7 +144,7 @@ export default function CameraPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold font-headline text-glow">
-              NNE
+              {heading}
             </div>
           </CardContent>
         </Card>
