@@ -74,6 +74,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     logout,
   };
 
+  const isAuthPage = pathname === '/login' || pathname === '/signup';
+
+  if (loading && !isAuthPage) {
+    return <div className="flex h-screen w-full items-center justify-center">Loading...</div>;
+  }
+  
+  if (!user && !isAuthPage) {
+    return null; 
+  }
+
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
