@@ -19,10 +19,13 @@ import {
   PlusCircle,
   Trash2,
   LogOut,
+  Palette,
+  Check,
 } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
+import { useTheme } from '@/hooks/use-theme';
 import { 
   getUserProfile, 
   updateUserProfile,
@@ -38,11 +41,20 @@ import {
   Vehicle,
   Contact
 } from '@/services/firestore';
+import { cn } from '@/lib/utils';
+
+const themes = [
+    { name: 'Guardian', id: 'theme-dark' },
+    { name: 'Daylight', id: 'theme-light' },
+    { name: 'Oceanic', id: 'theme-oceanic' },
+    { name: 'Forest', id: 'theme-forest' },
+];
 
 export default function SettingsPage() {
   const { user, logout, loading } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
+  const { theme, setTheme } = useTheme();
 
   const [profile, setProfile] = useState<Partial<UserProfile>>({ name: '' });
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
@@ -172,6 +184,48 @@ export default function SettingsPage() {
           Manage your profile, vehicles, and contacts.
         </p>
       </div>
+
+       <Card>
+        <CardHeader>
+          <div className="flex items-center gap-4">
+            <Palette className="h-6 w-6" />
+            <CardTitle>Appearance</CardTitle>
+          </div>
+          <CardDescription>
+            Customize the look and feel of your interface.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-2 gap-4">
+            {themes.map((t) => (
+              <div key={t.id}>
+                <button
+                  onClick={() => setTheme(t.id)}
+                  className={cn(
+                    'w-full border-2 rounded-lg p-2 flex items-center justify-center',
+                    theme === t.id ? 'border-primary' : 'border-transparent'
+                  )}
+                >
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between">
+                       <span className="text-sm font-medium">{t.name}</span>
+                       {theme === t.id && <Check className="h-5 w-5 text-primary" />}
+                    </div>
+                    <div className={cn('h-16 w-full rounded-md flex items-center justify-center p-2', t.id)}>
+                      <div className="w-full h-full rounded-md bg-card/80 p-2 flex flex-col gap-1">
+                          <div className="h-2 w-4/5 rounded-full bg-primary" />
+                          <div className="h-2 w-full rounded-full bg-secondary" />
+                          <div className="h-2 w-3/5 rounded-full bg-accent" />
+                      </div>
+                    </div>
+                  </div>
+                </button>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
 
       <Card>
         <CardHeader>

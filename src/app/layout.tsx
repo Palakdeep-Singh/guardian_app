@@ -10,6 +10,7 @@ import BottomNavBar from "@/components/layout/BottomNavBar";
 import { AuthProvider, useAuth } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
 import { usePathname } from "next/navigation";
+import { ThemeProvider, useTheme } from "@/hooks/use-theme";
 
 // export const metadata: Metadata = {
 //   title: "Guardian Mobile",
@@ -29,6 +30,7 @@ const orbitron = Orbitron({
 function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { user, loading } = useAuth();
+  const { theme } = useTheme();
 
   const publicRoutes = ['/login', '/signup'];
   const isPublicPage = publicRoutes.includes(pathname);
@@ -38,7 +40,7 @@ function AppLayout({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="relative w-full max-w-lg bg-background flex flex-col shadow-2xl overflow-hidden h-[100dvh] md:h-[90vh] md:max-h-[900px] md:rounded-3xl border border-primary/20 shadow-primary/20">
+    <div className={cn("relative w-full max-w-lg bg-background flex flex-col shadow-2xl overflow-hidden h-[100dvh] md:h-[90vh] md:max-h-[900px] md:rounded-3xl border border-primary/20 shadow-primary/20", theme)}>
       {!isPublicPage && <Header />}
       <main className={cn("flex-1 overflow-y-auto", !isPublicPage && "pb-20")}>{children}</main>
       {!isPublicPage && <BottomNavBar />}
@@ -61,7 +63,9 @@ export default function RootLayout({
       </head>
       <body className={cn("font-body antialiased flex justify-center items-center min-h-screen", exo2.variable, orbitron.variable)}>
         <AuthProvider>
-          <AppLayout>{children}</AppLayout>
+          <ThemeProvider>
+            <AppLayout>{children}</AppLayout>
+          </ThemeProvider>
         </AuthProvider>
       </body>
     </html>

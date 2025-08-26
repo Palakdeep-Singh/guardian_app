@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -7,7 +8,7 @@ body {
 }
 
 @layer base {
-  :root {
+  :root, .theme-light {
     --background: 0 0% 100%;
     --foreground: 222.2 84% 4.9%;
     --card: 0 0% 100%;
@@ -43,7 +44,7 @@ body {
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
 
-  .dark {
+  .dark, .theme-dark {
     --background: 224 71% 4%;
     --foreground: 210 40% 98%;
     --card: 224 71% 4%;
@@ -77,6 +78,51 @@ body {
     --sidebar-border: 240 3.7% 15.9%;
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
+
+  .theme-oceanic {
+    --background: 210 40% 98%;
+    --foreground: 215.2 62.1% 25.1%;
+    --card: 210 40% 98%;
+    --card-foreground: 215.2 62.1% 25.1%;
+    --popover: 210 40% 98%;
+    --popover-foreground: 215.2 62.1% 25.1%;
+    --primary: 205.1 83.3% 57.8%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 210 40% 92.1%;
+    --secondary-foreground: 215.2 62.1% 25.1%;
+    --muted: 210 40% 92.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    --accent: 205.1 83.3% 57.8%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 214.3 31.8% 85.4%;
+    --input: 214.3 31.8% 85.4%;
+    --ring: 205.1 83.3% 57.8%;
+  }
+  
+  .theme-forest {
+    --background: 220 15% 96%;
+    --foreground: 120 25% 15%;
+    --card: 220 15% 96%;
+    --card-foreground: 120 25% 15%;
+    --popover: 220 15% 96%;
+    --popover-foreground: 120 25% 15%;
+    --primary: 142.1 76.2% 36.3%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 142.1 16.2% 86.3%;
+    --secondary-foreground: 120 25% 15%;
+    --muted: 142.1 16.2% 86.3%;
+    --muted-foreground: 120 10% 40%;
+    --accent: 142.1 76.2% 36.3%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 142.1 16.2% 80.3%;
+    --input: 142.1 16.2% 80.3%;
+    --ring: 142.1 76.2% 36.3%;
+  }
+
 }
 
 @layer base {
