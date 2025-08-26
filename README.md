@@ -17,6 +17,14 @@ To run this application locally on your computer, you'll need to have [Node.js](
     ```
 4.  **View the App**: Open your web browser and navigate to [http://localhost:9002](http://localhost:9002) to see your application in action.
 
+## How This Project Handles Large Files
+
+This project uses **Git LFS (Large File Storage)** to manage files larger than GitHub's 100 MB limit.
+
+- **What is Git LFS?** It's a Git extension that replaces large files with small text pointers in your main repository, while storing the actual file content on a separate storage server.
+- **How it Works Here:** When you `git push`, the small pointers are uploaded to GitHub, and the actual large files are uploaded to Firebase Storage. This process is handled automatically by the pre-push hook that is configured in this repository. You do not need to do anything extra.
+- **What You Need to Do:** Simply `git add`, `git commit`, and `git push` as you normally would. Git LFS works in the background to handle the large files correctly. You do not need to worry about manually uploading folders.
+
 ## Publishing to GitHub
 
 To share your code or collaborate with others, you can publish it to GitHub.
