@@ -2,11 +2,12 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Map, Bell, ShieldAlert } from "lucide-react";
+import { LayoutDashboard, Map, Bell, ShieldAlert, Video } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const navItems = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/camera", label: "Camera", icon: Video },
   { href: "/gps", label: "GPS", icon: Map },
   { href: "/alerts", label: "Alerts", icon: Bell },
   { href: "/emergency", label: "Emergency", icon: ShieldAlert },
@@ -28,7 +29,7 @@ export default function BottomNavBar() {
               href={item.href}
               className={cn(
                 "flex flex-col items-center justify-center gap-1 flex-1 text-muted-foreground hover:text-primary transition-colors h-full",
-                isActive && "text-primary"
+                isActive && "text-primary text-glow"
               )}
             >
               <item.icon className="h-6 w-6" />
