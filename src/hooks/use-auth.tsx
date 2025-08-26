@@ -5,7 +5,8 @@ import {
   useEffect, 
   createContext, 
   useContext, 
-  ReactNode 
+  ReactNode,
+  useCallback
 } from 'react';
 import { 
   getAuth, 
@@ -30,6 +31,8 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+const publicRoutes = ['/login', '/signup'];
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
@@ -40,31 +43,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setUser(user);
       setLoading(false);
-      
-      const isAuthPage = pathname === '/login' || pathname === '/signup';
-
-      if (!user && !isAuthPage) {
-        router.push('/login');
-      }
-      if (user && isAuthPage) {
-        router.push('/');
-      }
     });
-
     return () => unsubscribe();
-  }, [router, pathname]);
+  }, []);
 
-  const login = (email: string, pass: string) => {
+  useEffect(() => {
+    if (loading) return;
+
+    const isAuthPage = publicRoutes.includes(pathname);
+
+    if (!user && !isAuthPage) {
+      router.push('/login');
+    }
+    if (user && isAuthPage) {
+      router.push('/');
+    }
+  }, [user, loading, router, pathname]);
+
+  const login = useCallback((email: string, pass: string) => {
     return signInWithEmailAndPassword(auth, email, pass);
-  };
+  }, []);
 
-  const signup = (email: string, pass: string) => {
+  const signup = useCallback((email: string, pass:string) => {
     return createUserWithEmailAndPassword(auth, email, pass);
-  };
+  }, []);
 
-  const logout = () => {
+  const logout = useCallback(() => {
     return signOut(auth);
-  };
+  }, []);
 
   const value = {
     user,
@@ -73,18 +79,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     signup,
     logout,
   };
-
-  const isAuthPage = pathname === '/login' || pathname === '/signup';
-
-  if (loading && !isAuthPage) {
-    return <div className="flex h-screen w-full items-center justify-center">Loading...</div>;
-  }
   
-  if (!user && !isAuthPage) {
-    return null; 
-  }
+  const isAuthPage = publicRoutes.includes(pathname);
+  const showLoader = loading && !isAuthPage;
+  const showContent = !loading && ((user && !isAuthPage) || isAuthPage);
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider value={value}>
+      {showLoader && <div className="flex h-screen w-full items-center justify-center">Loading...</div>}
+      {showContent && children}
+    </AuthContext.Provider>
+  );
 }
 
 export const useAuth = () => {
