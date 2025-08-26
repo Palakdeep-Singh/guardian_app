@@ -1,3 +1,4 @@
+'use client';
 import {
   Gauge,
   Radar,
@@ -9,8 +10,24 @@ import {
 import SensorCard from "@/components/dashboard/SensorCard";
 import PowerChart from "@/components/dashboard/PowerChart";
 import { Progress } from "@/components/ui/progress";
+import { useAuth } from "@/hooks/use-auth";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 
 export default function DashboardPage() {
+  const { user, loading } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!loading && !user) {
+      router.push('/login');
+    }
+  }, [user, loading, router]);
+
+  if (loading || !user) {
+    return <div className="p-4">Loading...</div>;
+  }
+
   return (
     <div className="p-4 space-y-4">
       <div className="grid gap-4 md:grid-cols-2 grid-cols-2">

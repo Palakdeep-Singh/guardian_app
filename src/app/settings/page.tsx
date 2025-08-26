@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import {
   Card,
   CardContent,
@@ -16,9 +17,28 @@ import {
   Users,
   PlusCircle,
   Trash2,
+  LogOut,
 } from 'lucide-react';
+import { useAuth } from '@/hooks/use-auth';
+import { useRouter } from 'next/navigation';
 
 export default function SettingsPage() {
+  const { user, logout, loading } = useAuth();
+  const router = useRouter();
+
+  const handleLogout = async () => {
+    await logout();
+    router.push('/login');
+  };
+
+  if (loading) {
+    return <div className="p-4">Loading...</div>;
+  }
+
+  if (!user) {
+    return null; // or a message indicating you need to be logged in
+  }
+
   return (
     <div className="p-4 space-y-6">
       <div className="text-left">
@@ -43,7 +63,7 @@ export default function SettingsPage() {
           </div>
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
-            <Input id="email" type="email" placeholder="e.g., tony@stark.com" />
+            <Input id="email" type="email" placeholder="e.g., tony@stark.com" value={user.email ?? ''} disabled />
           </div>
           <Button>Save Profile</Button>
         </CardContent>
@@ -110,6 +130,11 @@ export default function SettingsPage() {
           </Button>
         </CardContent>
       </Card>
+
+      <Button variant="outline" onClick={handleLogout} className="w-full">
+        <LogOut className="mr-2 h-4 w-4" />
+        Logout
+      </Button>
     </div>
   );
 }

@@ -3,6 +3,7 @@ import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
 import Header from "@/components/layout/Header";
 import BottomNavBar from "@/components/layout/BottomNavBar";
+import { AuthProvider } from "@/hooks/use-auth";
 
 export const metadata: Metadata = {
   title: "Guardian Mobile",
@@ -25,12 +26,14 @@ export default function RootLayout({
         />
       </head>
       <body className="font-body antialiased flex justify-center items-center min-h-screen">
-        <div className="relative w-full max-w-lg bg-background flex flex-col shadow-2xl overflow-hidden h-[100dvh] md:h-[90vh] md:max-h-[900px] md:rounded-3xl border border-primary/20 shadow-primary/20">
-          <Header />
-          <main className="flex-1 overflow-y-auto pb-20">{children}</main>
-          <BottomNavBar />
-          <Toaster />
-        </div>
+        <AuthProvider>
+          <div className="relative w-full max-w-lg bg-background flex flex-col shadow-2xl overflow-hidden h-[100dvh] md:h-[90vh] md:max-h-[900px] md:rounded-3xl border border-primary/20 shadow-primary/20">
+            <Header />
+            <main className="flex-1 overflow-y-auto pb-20">{children}</main>
+            <BottomNavBar />
+            <Toaster />
+          </div>
+        </AuthProvider>
       </body>
     </html>
   );
