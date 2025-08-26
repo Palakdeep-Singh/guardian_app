@@ -1,3 +1,4 @@
+
 'use client';
 
 import { 
@@ -80,14 +81,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     logout,
   };
   
-  const isAuthPage = publicRoutes.includes(pathname);
-  const showLoader = loading && !isAuthPage;
-  const showContent = !loading && ((user && !isAuthPage) || isAuthPage);
-
   return (
     <AuthContext.Provider value={value}>
-      {showLoader && <div className="flex h-screen w-full items-center justify-center">Loading...</div>}
-      {showContent && children}
+      {children}
     </AuthContext.Provider>
   );
 }
