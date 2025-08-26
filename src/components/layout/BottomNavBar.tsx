@@ -2,7 +2,14 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Map, Bell, ShieldAlert, Video } from "lucide-react";
+import {
+  LayoutDashboard,
+  Map,
+  Bell,
+  ShieldAlert,
+  Video,
+  Settings,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const navItems = [
@@ -11,6 +18,7 @@ const navItems = [
   { href: "/gps", label: "GPS", icon: Map },
   { href: "/alerts", label: "Alerts", icon: Bell },
   { href: "/emergency", label: "Emergency", icon: ShieldAlert },
+  { href: "/settings", label: "Settings", icon: Settings },
 ];
 
 export default function BottomNavBar() {
