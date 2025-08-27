@@ -1,6 +1,5 @@
 
 'use client';
-import Image from "next/image";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Route, MapPin, Share2, TrendingUp, Wind, StopCircle } from "lucide-react";
@@ -8,6 +7,96 @@ import { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { addLocation } from "@/services/firestore";
+import { GoogleMap, useJsApiLoader, Marker } from '@react-google-maps/api';
+
+const containerStyle = {
+  width: '100%',
+  height: '100%',
+};
+
+const mapOptions = {
+    styles: [
+        { elementType: 'geometry', stylers: [{ color: '#242f3e' }] },
+        { elementType: 'labels.text.stroke', stylers: [{ color: '#242f3e' }] },
+        { elementType: 'labels.text.fill', stylers: [{ color: '#746855' }] },
+        {
+            featureType: 'administrative.locality',
+            elementType: 'labels.text.fill',
+            stylers: [{ color: '#d59563' }],
+        },
+        {
+            featureType: 'poi',
+            elementType: 'labels.text.fill',
+            stylers: [{ color: '#d59563' }],
+        },
+        {
+            featureType: 'poi.park',
+            elementType: 'geometry',
+            stylers: [{ color: '#263c3f' }],
+        },
+        {
+            featureType: 'poi.park',
+            elementType: 'labels.text.fill',
+            stylers: [{ color: '#6b9a76' }],
+        },
+        {
+            featureType: 'road',
+            elementType: 'geometry',
+            stylers: [{ color: '#38414e' }],
+        },
+        {
+            featureType: 'road',
+            elementType: 'geometry.stroke',
+            stylers: [{ color: '#212a37' }],
+        },
+        {
+            featureType: 'road',
+            elementType: 'labels.text.fill',
+            stylers: [{ color: '#9ca5b3' }],
+        },
+        {
+            featureType: 'road.highway',
+            elementType: 'geometry',
+            stylers: [{ color: '#746855' }],
+        },
+        {
+            featureType: 'road.highway',
+            elementType: 'geometry.stroke',
+            stylers: [{ color: '#1f2835' }],
+        },
+        {
+            featureType: 'road.highway',
+            elementType: 'labels.text.fill',
+            stylers: [{ color: '#f3d19c' }],
+        },
+        {
+            featureType: 'transit',
+            elementType: 'geometry',
+            stylers: [{ color: '#2f3948' }],
+        },
+        {
+            featureType: 'transit.station',
+            elementType: 'labels.text.fill',
+            stylers: [{ color: '#d59563' }],
+        },
+        {
+            featureType: 'water',
+            elementType: 'geometry',
+            stylers: [{ color: '#17263c' }],
+        },
+        {
+            featureType: 'water',
+            elementType: 'labels.text.fill',
+            stylers: [{ color: '#515c6d' }],
+        },
+        {
+            featureType: 'water',
+            elementType: 'labels.text.stroke',
+            stylers: [{ color: '#17263c' }],
+        },
+    ],
+    disableDefaultUI: true,
+};
 
 export default function GpsPage() {
     const { user } = useAuth();
@@ -18,6 +107,11 @@ export default function GpsPage() {
     const [location, setLocation] = useState<{ latitude: number, longitude: number } | null>(null);
     const locationIntervalRef = useRef<NodeJS.Timeout | null>(null);
     const headings = ["N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE", "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW"];
+    
+    const { isLoaded } = useJsApiLoader({
+        id: 'google-map-script',
+        googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || ""
+      })
 
     useEffect(() => {
         const interval = setInterval(() => {
@@ -71,14 +165,17 @@ export default function GpsPage() {
     <div className="p-4 space-y-4">
       <Card>
         <CardContent className="p-0">
-          <div className="relative w-full h-64">
-            <Image
-              src={`https://picsum.photos/seed/${location?.latitude},${location?.longitude}/800/600`}
-              alt="Map view of current location"
-              fill
-              className="object-cover rounded-t-lg"
-              data-ai-hint="street map"
-            />
+          <div className="relative w-full h-64 rounded-t-lg overflow-hidden">
+            {isLoaded && location ? (
+                <GoogleMap
+                    mapContainerStyle={containerStyle}
+                    center={{ lat: location.latitude, lng: location.longitude }}
+                    zoom={15}
+                    options={mapOptions}
+                >
+                    <Marker position={{ lat: location.latitude, lng: location.longitude }} />
+                </GoogleMap>
+            ) : <div>Loading Map...</div>}
           </div>
         </CardContent>
         <div className="p-4 border-t">
