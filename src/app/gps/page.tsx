@@ -3,7 +3,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Route, MapPin, Share2, TrendingUp, Wind, StopCircle } from "lucide-react";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { addLocation } from "@/services/firestore";
@@ -14,41 +14,83 @@ export default function GpsPage() {
     const [speed, setSpeed] = useState(45);
     const [heading, setHeading] = useState("NW");
     const [isRecording, setIsRecording] = useState(false);
-    const [location, setLocation] = useState<{ latitude: number, longitude: number } | null>(null);
+    const [location, setLocation] = useState<{ latitude: number, longitude: number } | null>({ latitude: 34.0522, longitude: -118.2437 });
     const headings = ["N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE", "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW"];
     
+    const locationRef = useRef(location);
+    locationRef.current = location;
+    
+    const isRecordingRef = useRef(isRecording);
+    isRecordingRef.current = isRecording;
+
+    const userRef = useRef(user);
+    userRef.current = user;
+
+    const storeLocation = useCallback(() => {
+        if (isRecordingRef.current && userRef.current && locationRef.current) {
+            addLocation(userRef.current.uid, locationRef.current);
+        }
+    }, []);
+
     useEffect(() => {
-        const interval = setInterval(() => {
+        let locationInterval: NodeJS.Timeout;
+        let simulationTimeout: NodeJS.Timeout;
+
+        const watchId = navigator.geolocation.watchPosition(
+          (position) => {
+            clearTimeout(simulationTimeout); // Real GPS signal found, cancel simulation fallback
+            clearInterval(locationInterval); // Stop simulation updates
+            const { latitude, longitude } = position.coords;
+            setLocation({ latitude, longitude });
+          },
+          (error) => {
+            console.error("Geolocation error, starting simulation:", error);
+            toast({ variant: 'destructive', title: "GPS Error", description: "Using simulated location data."})
+            // Fallback to simulation if real GPS fails
+            locationInterval = setInterval(() => {
+                setLocation(prev => ({
+                    latitude: (prev?.latitude ?? 34.0522) + (Math.random() - 0.5) * 0.001,
+                    longitude: (prev?.longitude ?? -118.2437) + (Math.random() - 0.5) * 0.001,
+                }));
+            }, 1000);
+          },
+          { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+        );
+        
+        // If no real GPS signal after 3 seconds, start simulation
+        simulationTimeout = setTimeout(() => {
+            if (!location) {
+                toast({ title: "GPS Timeout", description: "No GPS signal. Using simulated data." });
+                locationInterval = setInterval(() => {
+                     setLocation(prev => ({
+                        latitude: (prev?.latitude ?? 34.0522) + (Math.random() - 0.5) * 0.001,
+                        longitude: (prev?.longitude ?? -118.2437) + (Math.random() - 0.5) * 0.001,
+                    }));
+                }, 1000);
+            }
+        }, 3000);
+
+        const speedHeadingInterval = setInterval(() => {
             setSpeed(prev => Math.max(0, prev + Math.floor((Math.random() - 0.4) * 5)));
             setHeading(headings[Math.floor(Math.random() * headings.length)]);
         }, 3000);
 
-        const watchId = navigator.geolocation.watchPosition(
-          (position) => {
-            const { latitude, longitude } = position.coords;
-            setLocation({ latitude, longitude });
-            if (isRecording && user) {
-              addLocation(user.uid, { latitude, longitude });
-            }
-          },
-          (error) => {
-            console.error("Geolocation error:", error);
-            toast({ variant: 'destructive', title: "GPS Error", description: "Could not get your location."})
-          },
-          { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
-        );
+        const recordInterval = setInterval(storeLocation, 5000);
 
         return () => {
-            clearInterval(interval);
+            clearInterval(speedHeadingInterval);
+            clearInterval(locationInterval);
+            clearInterval(recordInterval);
+            clearTimeout(simulationTimeout);
             navigator.geolocation.clearWatch(watchId);
         };
-    }, [isRecording, user, toast]);
+    }, [storeLocation, toast]);
 
     const handleToggleRecording = () => {
         setIsRecording(!isRecording);
         toast({
-            title: isRecording ? 'Route Recording Stopped' : 'Route Recording Started',
-            description: isRecording ? 'Your route is no longer being recorded.' : 'Your route is now being recorded.',
+            title: !isRecording ? 'Route Recording Started' : 'Route Recording Stopped',
+            description: !isRecording ? 'Your route is now being recorded.' : 'Your route is no longer being recorded.',
         });
     };
 
