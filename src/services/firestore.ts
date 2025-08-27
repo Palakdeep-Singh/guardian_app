@@ -1,3 +1,4 @@
+
 'use client';
 import { 
   doc, 
@@ -10,6 +11,9 @@ import {
   getDocs,
   serverTimestamp,
   Timestamp,
+  query,
+  orderBy,
+  limit,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 
@@ -22,12 +26,19 @@ export interface Vehicle {
   id: string;
   name: string;
   model: string;
+  numberPlate: string;
 }
 
 export interface Contact {
   id: string;
   name: string;
   phone: string;
+}
+
+export interface Location {
+  latitude: number;
+  longitude: number;
+  timestamp: Timestamp;
 }
 
 // User Profile
@@ -90,4 +101,23 @@ export const updateContact = (userId: string, contactId: string, data: Partial<C
 export const deleteContact = (userId: string, contactId: string) => {
   const contactRef = doc(db, 'users', userId, 'contacts', contactId);
   return deleteDoc(contactRef);
+};
+
+// Location
+export const addLocation = (userId: string, location: { latitude: number; longitude: number }) => {
+  const locationCol = collection(db, 'users', userId, 'locations');
+  return addDoc(locationCol, {
+    ...location,
+    timestamp: serverTimestamp(),
+  });
+};
+
+export const getLatestLocation = async (userId: string): Promise<Location | null> => {
+  const locationCol = collection(db, 'users', userId, 'locations');
+  const q = query(locationCol, orderBy('timestamp', 'desc'), limit(1));
+  const snapshot = await getDocs(q);
+  if (snapshot.empty) {
+    return null;
+  }
+  return snapshot.docs[0].data() as Location;
 };
