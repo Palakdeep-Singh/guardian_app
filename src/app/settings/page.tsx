@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, memo } from 'react';
 import {
   Card,
   CardContent,
@@ -49,6 +49,84 @@ const themes = [
     { name: 'Oceanic', id: 'theme-oceanic' },
     { name: 'Forest', id: 'theme-forest' },
 ];
+
+const VehicleCard = memo(({ vehicle, onSave, onDelete }: { vehicle: Vehicle; onSave: (v: Vehicle) => void; onDelete: (id: string) => void; }) => {
+  const [name, setName] = useState(vehicle.name);
+  const [model, setModel] = useState(vehicle.model);
+
+  const handleSave = () => {
+    onSave({ ...vehicle, name, model });
+  };
+  
+  return (
+      <div className="p-4 border rounded-lg space-y-4">
+          <div className="space-y-2">
+              <Label htmlFor={`vehicle-name-${vehicle.id}`}>Vehicle Name</Label>
+              <Input
+                  id={`vehicle-name-${vehicle.id}`}
+                  placeholder="e.g., Mark II Bike"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  onBlur={handleSave}
+              />
+          </div>
+          <div className="space-y-2">
+              <Label htmlFor={`vehicle-model-${vehicle.id}`}>Model</Label>
+              <Input
+                  id={`vehicle-model-${vehicle.id}`}
+                  placeholder="e.g., Stark Industries EV"
+                  value={model}
+                  onChange={(e) => setModel(e.target.value)}
+                  onBlur={handleSave}
+              />
+          </div>
+          <Button variant="destructive" size="sm" className="gap-2" onClick={() => onDelete(vehicle.id)}>
+              <Trash2 /> Remove
+          </Button>
+      </div>
+  );
+});
+VehicleCard.displayName = 'VehicleCard';
+
+const ContactCard = memo(({ contact, onSave, onDelete }: { contact: Contact; onSave: (c: Contact) => void; onDelete: (id: string) => void; }) => {
+  const [name, setName] = useState(contact.name);
+  const [phone, setPhone] = useState(contact.phone);
+
+  const handleSave = () => {
+    onSave({ ...contact, name, phone });
+  };
+
+  return (
+    <div className="p-4 border rounded-lg space-y-4">
+      <div className="space-y-2">
+        <Label htmlFor={`contact-name-${contact.id}`}>Contact Name</Label>
+        <Input
+          id={`contact-name-${contact.id}`}
+          placeholder="e.g., Pepper Potts"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          onBlur={handleSave}
+        />
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor={`contact-phone-${contact.id}`}>Phone Number</Label>
+        <Input
+          id={`contact-phone-${contact.id}`}
+          type="tel"
+          placeholder="+1 (555) 123-4567"
+          value={phone}
+          onChange={(e) => setPhone(e.target.value)}
+          onBlur={handleSave}
+        />
+      </div>
+      <Button variant="destructive" size="sm" className="gap-2" onClick={() => onDelete(contact.id)}>
+        <Trash2 /> Remove
+      </Button>
+    </div>
+  );
+});
+ContactCard.displayName = 'ContactCard';
+
 
 export default function SettingsPage() {
   const { user, logout, loading } = useAuth();
@@ -100,11 +178,7 @@ export default function SettingsPage() {
     }
   };
 
-  const handleVehicleChange = (id: string, field: keyof Vehicle, value: string) => {
-    setVehicles(vehicles.map(v => v.id === id ? { ...v, [field]: value } : v));
-  };
-  
-  const handleVehicleSave = async (vehicle: Vehicle) => {
+  const handleVehicleSave = useCallback(async (vehicle: Vehicle) => {
     if(!user) return;
     try {
       await updateVehicle(user.uid, vehicle.id, vehicle);
@@ -112,9 +186,9 @@ export default function SettingsPage() {
     } catch (error) {
       toast({ variant: 'destructive', title: 'Error', description: 'Could not update vehicle.' });
     }
-  };
+  }, [user, toast]);
 
-  const handleVehicleDelete = async (id: string) => {
+  const handleVehicleDelete = useCallback(async (id: string) => {
     if (!user) return;
     try {
       await deleteVehicle(user.uid, id);
@@ -123,7 +197,7 @@ export default function SettingsPage() {
     } catch (error) {
       toast({ variant: 'destructive', title: 'Error', description: 'Could not remove vehicle.' });
     }
-  };
+  }, [user, vehicles, toast]);
 
   const handleAddContact = async () => {
     if (!user) return;
@@ -137,11 +211,7 @@ export default function SettingsPage() {
     }
   };
   
-  const handleContactChange = (id: string, field: keyof Contact, value: string) => {
-    setContacts(contacts.map(c => c.id === id ? { ...c, [field]: value } : c));
-  };
-
-  const handleContactSave = async (contact: Contact) => {
+  const handleContactSave = useCallback(async (contact: Contact) => {
     if(!user) return;
     try {
       await updateContact(user.uid, contact.id, contact);
@@ -149,9 +219,9 @@ export default function SettingsPage() {
     } catch (error) {
       toast({ variant: 'destructive', title: 'Error', description: 'Could not update contact.' });
     }
-  };
+  }, [user, toast]);
 
-  const handleContactDelete = async (id: string) => {
+  const handleContactDelete = useCallback(async (id: string) => {
     if (!user) return;
     try {
       await deleteContact(user.uid, id);
@@ -160,7 +230,7 @@ export default function SettingsPage() {
     } catch (error) {
       toast({ variant: 'destructive', title: 'Error', description: 'Could not remove contact.' });
     }
-  };
+  }, [user, contacts, toast]);
 
   const handleLogout = async () => {
     await logout();
@@ -265,31 +335,7 @@ export default function SettingsPage() {
         </CardHeader>
         <CardContent className="space-y-4">
           {vehicles.map((vehicle) => (
-            <div key={vehicle.id} className="p-4 border rounded-lg space-y-4">
-               <div className="space-y-2">
-                  <Label htmlFor={`vehicle-name-${vehicle.id}`}>Vehicle Name</Label>
-                  <Input 
-                    id={`vehicle-name-${vehicle.id}`} 
-                    placeholder="e.g., Mark II Bike" 
-                    value={vehicle.name}
-                    onChange={(e) => handleVehicleChange(vehicle.id, 'name', e.target.value)}
-                    onBlur={() => handleVehicleSave(vehicle)}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor={`vehicle-model-${vehicle.id}`}>Model</Label>
-                  <Input 
-                    id={`vehicle-model-${vehicle.id}`} 
-                    placeholder="e.g., Stark Industries EV" 
-                    value={vehicle.model}
-                    onChange={(e) => handleVehicleChange(vehicle.id, 'model', e.target.value)}
-                    onBlur={() => handleVehicleSave(vehicle)}
-                  />
-                </div>
-                <Button variant="destructive" size="sm" className="gap-2" onClick={() => handleVehicleDelete(vehicle.id)}>
-                  <Trash2 /> Remove
-                </Button>
-            </div>
+            <VehicleCard key={vehicle.id} vehicle={vehicle} onSave={handleVehicleSave} onDelete={handleVehicleDelete} />
           ))}
           <Button variant="outline" className="w-full gap-2" onClick={handleAddVehicle}>
             <PlusCircle />
@@ -310,32 +356,7 @@ export default function SettingsPage() {
         </CardHeader>
         <CardContent className="space-y-4">
             {contacts.map(contact => (
-              <div key={contact.id} className="p-4 border rounded-lg space-y-4">
-                   <div className="space-y-2">
-                      <Label htmlFor={`contact-name-${contact.id}`}>Contact Name</Label>
-                      <Input 
-                        id={`contact-name-${contact.id}`} 
-                        placeholder="e.g., Pepper Potts" 
-                        value={contact.name}
-                        onChange={(e) => handleContactChange(contact.id, 'name', e.target.value)}
-                        onBlur={() => handleContactSave(contact)}
-                        />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor={`contact-phone-${contact.id}`}>Phone Number</Label>
-                      <Input 
-                        id={`contact-phone-${contact.id}`} 
-                        type="tel" 
-                        placeholder="+1 (555) 123-4567" 
-                        value={contact.phone}
-                        onChange={(e) => handleContactChange(contact.id, 'phone', e.target.value)}
-                        onBlur={() => handleContactSave(contact)}
-                      />
-                    </div>
-                     <Button variant="destructive" size="sm" className="gap-2" onClick={() => handleContactDelete(contact.id)}>
-                      <Trash2 /> Remove
-                    </Button>
-              </div>
+              <ContactCard key={contact.id} contact={contact} onSave={handleContactSave} onDelete={handleContactDelete} />
             ))}
           <Button variant="outline" className="w-full gap-2" onClick={handleAddContact}>
             <PlusCircle />

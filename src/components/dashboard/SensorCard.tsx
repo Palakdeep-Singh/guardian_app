@@ -1,3 +1,4 @@
+import * as React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import type { LucideIcon } from "lucide-react";
@@ -11,7 +12,7 @@ interface SensorCardProps {
   valueClassName?: string;
 }
 
-export default function SensorCard({
+const SensorCard = React.memo(function SensorCard({
   icon: Icon,
   title,
   value,
@@ -35,4 +36,6 @@ export default function SensorCard({
       </CardContent>
     </Card>
   );
-}
+});
+
+export default SensorCard;

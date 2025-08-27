@@ -1,3 +1,4 @@
+
 'use client';
 import {
   Gauge,
@@ -8,11 +9,16 @@ import {
   Zap,
 } from "lucide-react";
 import SensorCard from "@/components/dashboard/SensorCard";
-import PowerChart from "@/components/dashboard/PowerChart";
 import { Progress } from "@/components/ui/progress";
 import { useAuth } from "@/hooks/use-auth";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import dynamic from 'next/dynamic';
+
+const PowerChart = dynamic(() => import('@/components/dashboard/PowerChart'), {
+  ssr: false,
+  loading: () => <div className="p-4">Loading Chart...</div>
+});
 
 export default function DashboardPage() {
   const { user, loading } = useAuth();
