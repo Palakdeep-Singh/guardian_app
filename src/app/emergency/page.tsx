@@ -20,6 +20,8 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useToast } from "@/hooks/use-toast";
 import { reportAccident, AccidentReport } from "@/ai/flows/accident-report";
+import { reportTheft, TheftReport } from "@/ai/flows/theft-report";
+import { reportMedicalEmergency, MedicalEmergencyReport } from "@/ai/flows/medical-report";
 import { generateAudio, AudioResponse } from "@/ai/flows/tts";
 import {
     AlertDialog,
@@ -49,15 +51,21 @@ const emergencyContacts = [
   },
 ];
 
+type ReportType = 'Accident' | 'Theft' | 'Medical';
+
 export default function EmergencyPage() {
   const { toast } = useToast();
-  const [isLoading, setIsLoading] = useState(false);
-  const [accidentDetails, setAccidentDetails] = useState<AccidentReport | null>(null);
+  const [loadingStates, setLoadingStates] = useState({
+      accident: false,
+      theft: false,
+      medical: false,
+  });
+  const [reportDetails, setReportDetails] = useState< (AccidentReport | TheftReport | MedicalEmergencyReport) & {type: ReportType} | null>(null);
   const [audio, setAudio] = useState<AudioResponse | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
-  const handleReportAccident = async () => {
-    setIsLoading(true);
+  const handleReport = async (type: ReportType) => {
+    setLoadingStates(prev => ({...prev, [type.toLowerCase()]: true}));
     try {
       const location = await new Promise<{ latitude: number, longitude: number }>((resolve, reject) => {
         navigator.geolocation.getCurrentPosition(
@@ -67,8 +75,20 @@ export default function EmergencyPage() {
         )
       });
       
-      const report = await reportAccident(location);
-      setAccidentDetails(report);
+      let report;
+      switch(type) {
+        case 'Accident':
+          report = await reportAccident(location);
+          break;
+        case 'Theft':
+          report = await reportTheft(location);
+          break;
+        case 'Medical':
+            report = await reportMedicalEmergency(location);
+            break;
+      }
+      
+      setReportDetails({ ...report, type });
 
       const audioResponse = await generateAudio({ text: report.callScript });
       setAudio(audioResponse);
@@ -78,11 +98,11 @@ export default function EmergencyPage() {
     } catch (error: any) {
       toast({
         variant: "destructive",
-        title: "Error Reporting Accident",
+        title: `Error Reporting ${type}`,
         description: error.message || "Could not get location or generate report.",
       });
     } finally {
-      setIsLoading(false);
+      setLoadingStates(prev => ({...prev, [type.toLowerCase()]: false}));
     }
   };
 
@@ -99,22 +119,40 @@ export default function EmergencyPage() {
         <Button
           variant="destructive"
           className="h-24 flex-col gap-2 text-lg"
-          onClick={handleReportAccident}
-          disabled={isLoading}
+          onClick={() => handleReport('Accident')}
+          disabled={loadingStates.accident}
         >
-          {isLoading ? (
+          {loadingStates.accident ? (
             <Loader2 className="h-8 w-8 animate-spin" />
           ) : (
             <Car className="h-8 w-8" />
           )}
           Report Accident
         </Button>
-        <Button variant="destructive" className="h-24 flex-col gap-2 text-lg">
-          <ShieldOff className="h-8 w-8" />
+        <Button 
+            variant="destructive" 
+            className="h-24 flex-col gap-2 text-lg"
+            onClick={() => handleReport('Theft')}
+            disabled={loadingStates.theft}
+        >
+          {loadingStates.theft ? (
+            <Loader2 className="h-8 w-8 animate-spin" />
+          ) : (
+            <ShieldOff className="h-8 w-8" />
+          )}
           Report Theft
         </Button>
-        <Button variant="destructive" className="h-24 flex-col gap-2 text-lg">
-          <HeartPulse className="h-8 w-8" />
+        <Button 
+            variant="destructive" 
+            className="h-24 flex-col gap-2 text-lg"
+            onClick={() => handleReport('Medical')}
+            disabled={loadingStates.medical}
+        >
+          {loadingStates.medical ? (
+            <Loader2 className="h-8 w-8 animate-spin" />
+          ) : (
+            <HeartPulse className="h-8 w-8" />
+          )}
           Medical Emergency
         </Button>
       </div>
@@ -164,19 +202,19 @@ export default function EmergencyPage() {
           </ul>
         </CardContent>
       </Card>
-      {accidentDetails && (
+      {reportDetails && (
         <AlertDialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>Accident Reported</AlertDialogTitle>
+              <AlertDialogTitle>{reportDetails.type} Reported</AlertDialogTitle>
               <AlertDialogDescription>
                 The following details have been logged. An automated alert is ready.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <div className="text-sm space-y-2">
-                <p><strong>Time:</strong> {accidentDetails.time}</p>
-                <p><strong>Location:</strong> {accidentDetails.location}</p>
-                <p><strong>Report:</strong> {accidentDetails.report}</p>
+                <p><strong>Time:</strong> {reportDetails.time}</p>
+                <p><strong>Location:</strong> {reportDetails.location}</p>
+                <p><strong>Report:</strong> {reportDetails.report}</p>
                 {audio && (
                   <div>
                     <p><strong>Simulated Call:</strong></p>
