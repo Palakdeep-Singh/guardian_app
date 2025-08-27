@@ -3,7 +3,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Route, MapPin, Share2, TrendingUp, Wind, StopCircle } from "lucide-react";
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { addLocation } from "@/services/firestore";
@@ -72,17 +72,13 @@ export default function GpsPage() {
              toast({ variant: 'destructive', title: "No Location", description: "Could not get your location to share."})
         }
     };
-
-    const displayMap = useMemo(() => (
-      location ? <Map location={location} /> : <div className="flex items-center justify-center h-full bg-muted"><p>Loading Map...</p></div>
-    ), [location]);
     
   return (
     <div className="p-4 space-y-4">
       <Card>
         <CardContent className="p-0">
           <div className="relative w-full h-64 rounded-t-lg overflow-hidden">
-            {displayMap}
+            {location ? <Map location={location} /> : <div className="flex items-center justify-center h-full bg-muted"><p>Locating...</p></div>}
           </div>
         </CardContent>
         <div className="p-4 border-t">
@@ -91,7 +87,7 @@ export default function GpsPage() {
               <p className="text-sm text-muted-foreground">Current Location</p>
               <p className="font-semibold">{location ? `${location.latitude.toFixed(4)}, ${location.longitude.toFixed(4)}` : 'Locating...'}</p>
             </div>
-            <Button variant="outline" size="icon">
+            <Button variant="outline" size="icon" onClick={handleShareLocation}>
               <MapPin className="h-4 w-4" />
             </Button>
           </div>

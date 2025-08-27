@@ -4,7 +4,7 @@
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 // Fix for default icon issue with Leaflet and Webpack
 const icon = L.icon({
@@ -24,8 +24,14 @@ const RecenterAutomatically = ({lat,lng}: {lat:number, lng:number}) => {
      return null;
 }
 
-export default function Map({location}: {location: {latitude: number, longitude: number} | null}) {
-    if (!location) {
+export default function Map({location}: {location: {latitude: number, longitude: number}}) {
+    const [isClient, setIsClient] = useState(false)
+
+    useEffect(() => {
+        setIsClient(true)
+    }, [])
+    
+    if (!isClient) {
         return null;
     }
 
