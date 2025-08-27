@@ -7,13 +7,6 @@ import { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { addLocation } from "@/services/firestore";
-import 'leaflet/dist/leaflet.css';
-import dynamic from 'next/dynamic';
-
-const Map = dynamic(() => import('@/components/map/Map'), {
-  loading: () => <div className="flex items-center justify-center h-full bg-muted"><p>Loading Map...</p></div>,
-  ssr: false,
-});
 
 export default function GpsPage() {
     const { user } = useAuth();
@@ -22,7 +15,6 @@ export default function GpsPage() {
     const [heading, setHeading] = useState("NW");
     const [isRecording, setIsRecording] = useState(false);
     const [location, setLocation] = useState<{ latitude: number, longitude: number } | null>(null);
-    const locationIntervalRef = useRef<NodeJS.Timeout | null>(null);
     const headings = ["N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE", "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW"];
     
     useEffect(() => {
@@ -76,22 +68,20 @@ export default function GpsPage() {
   return (
     <div className="p-4 space-y-4">
       <Card>
-        <CardContent className="p-0">
-          <div className="relative w-full h-64 rounded-t-lg overflow-hidden">
-            {location ? <Map location={location} /> : <div className="flex items-center justify-center h-full bg-muted"><p>Locating...</p></div>}
-          </div>
-        </CardContent>
-        <div className="p-4 border-t">
+        <CardHeader>
+          <CardTitle>Current Location</CardTitle>
+        </CardHeader>
+        <CardContent>
           <div className="flex justify-between items-center">
             <div>
-              <p className="text-sm text-muted-foreground">Current Location</p>
-              <p className="font-semibold">{location ? `${location.latitude.toFixed(4)}, ${location.longitude.toFixed(4)}` : 'Locating...'}</p>
+              <p className="text-sm text-muted-foreground">Coordinates</p>
+              <p className="font-semibold font-mono">{location ? `${location.latitude.toFixed(4)}, ${location.longitude.toFixed(4)}` : 'Locating...'}</p>
             </div>
             <Button variant="outline" size="icon" onClick={handleShareLocation}>
               <MapPin className="h-4 w-4" />
             </Button>
           </div>
-        </div>
+        </CardContent>
       </Card>
 
       <div className="grid grid-cols-2 gap-4">

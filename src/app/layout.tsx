@@ -11,7 +11,6 @@ import { AuthProvider, useAuth } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
 import { usePathname } from "next/navigation";
 import { ThemeProvider, useTheme } from "@/hooks/use-theme";
-import 'leaflet/dist/leaflet.css';
 
 // export const metadata: Metadata = {
 //   title: "Guardian Mobile",
