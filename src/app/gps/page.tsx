@@ -10,6 +10,11 @@ import { addLocation } from "@/services/firestore";
 import 'leaflet/dist/leaflet.css';
 import dynamic from 'next/dynamic';
 
+const Map = dynamic(() => import('@/components/map/Map'), {
+  loading: () => <div className="flex items-center justify-center h-full bg-muted"><p>Loading Map...</p></div>,
+  ssr: false,
+});
+
 export default function GpsPage() {
     const { user } = useAuth();
     const { toast } = useToast();
@@ -68,26 +73,12 @@ export default function GpsPage() {
         }
     };
     
-    const Map = useMemo(
-        () =>
-          dynamic(
-            () => import('@/components/map/Map'),
-            {
-              loading: () => <p>A map is loading</p>,
-              ssr: false,
-            }
-          ),
-        []
-      );
-
   return (
     <div className="p-4 space-y-4">
       <Card>
         <CardContent className="p-0">
           <div className="relative w-full h-64 rounded-t-lg overflow-hidden">
-            {location ? (
-                <Map location={location} />
-            ) : <div className="flex items-center justify-center h-full">Loading Map...</div>}
+            <Map location={location} />
           </div>
         </CardContent>
         <div className="p-4 border-t">

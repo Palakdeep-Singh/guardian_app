@@ -1,9 +1,10 @@
 
 'use client';
 
-import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
+import { useEffect } from 'react';
 
 // Fix for default icon issue with Leaflet and Webpack
 const icon = L.icon({
@@ -15,8 +16,19 @@ const icon = L.icon({
     shadowSize: [41, 41]
 });
 
+const RecenterAutomatically = ({lat,lng}: {lat:number, lng:number}) => {
+    const map = useMap();
+     useEffect(() => {
+       map.setView([lat, lng]);
+     }, [lat, lng, map]);
+     return null;
+}
 
-export default function Map({location}: {location: {latitude: number, longitude: number}}) {
+export default function Map({location}: {location: {latitude: number, longitude: number} | null}) {
+    if (!location) {
+        return null;
+    }
+
     return (
         <MapContainer center={[location.latitude, location.longitude]} zoom={15} style={{ height: '100%', width: '100%' }}>
             <TileLayer
@@ -28,6 +40,7 @@ export default function Map({location}: {location: {latitude: number, longitude:
                     You are here.
                 </Popup>
             </Marker>
+            <RecenterAutomatically lat={location.latitude} lng={location.longitude} />
         </MapContainer>
     )
 }
