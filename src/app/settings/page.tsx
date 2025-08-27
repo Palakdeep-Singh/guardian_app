@@ -53,9 +53,10 @@ const themes = [
 const VehicleCard = memo(({ vehicle, onSave, onDelete }: { vehicle: Vehicle; onSave: (v: Vehicle) => void; onDelete: (id: string) => void; }) => {
   const [name, setName] = useState(vehicle.name);
   const [model, setModel] = useState(vehicle.model);
+  const [numberPlate, setNumberPlate] = useState(vehicle.numberPlate);
 
   const handleSave = () => {
-    onSave({ ...vehicle, name, model });
+    onSave({ ...vehicle, name, model, numberPlate });
   };
   
   return (
@@ -64,7 +65,7 @@ const VehicleCard = memo(({ vehicle, onSave, onDelete }: { vehicle: Vehicle; onS
               <Label htmlFor={`vehicle-name-${vehicle.id}`}>Vehicle Name</Label>
               <Input
                   id={`vehicle-name-${vehicle.id}`}
-                  placeholder="e.g., Mark II Bike"
+                  placeholder="e.g., My Bike"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   onBlur={handleSave}
@@ -77,6 +78,16 @@ const VehicleCard = memo(({ vehicle, onSave, onDelete }: { vehicle: Vehicle; onS
                   placeholder="e.g., Stark Industries EV"
                   value={model}
                   onChange={(e) => setModel(e.target.value)}
+                  onBlur={handleSave}
+              />
+          </div>
+          <div className="space-y-2">
+              <Label htmlFor={`vehicle-plate-${vehicle.id}`}>Number Plate</Label>
+              <Input
+                  id={`vehicle-plate-${vehicle.id}`}
+                  placeholder="e.g., LOKI-1"
+                  value={numberPlate}
+                  onChange={(e) => setNumberPlate(e.target.value)}
                   onBlur={handleSave}
               />
           </div>
@@ -168,7 +179,7 @@ export default function SettingsPage() {
 
   const handleAddVehicle = async () => {
     if (!user) return;
-    const newVehicle: Omit<Vehicle, 'id'> = { name: 'New Vehicle', model: '' };
+    const newVehicle: Omit<Vehicle, 'id'> = { name: 'New Vehicle', model: '', numberPlate: '' };
     try {
       const addedVehicle = await addVehicle(user.uid, newVehicle);
       setVehicles([...vehicles, addedVehicle]);

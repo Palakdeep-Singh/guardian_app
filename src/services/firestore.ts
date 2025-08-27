@@ -26,6 +26,7 @@ export interface Vehicle {
   id: string;
   name: string;
   model: string;
+  numberPlate: string;
 }
 
 export interface Contact {
