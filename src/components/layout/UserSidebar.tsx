@@ -21,9 +21,12 @@ import {
   Contact,
 } from '@/services/firestore';
 import { User, Car, Phone } from 'lucide-react';
+import { Button } from '../ui/button';
+import { useRouter } from 'next/navigation';
 
 export default function UserSidebar() {
   const { user } = useAuth();
+  const router = useRouter();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [contacts, setContacts] = useState<Contact[]>([]);
@@ -44,6 +47,11 @@ export default function UserSidebar() {
       fetchData();
     }
   }, [isOpen, user]);
+  
+  const goToSettings = () => {
+    router.push('/settings');
+    setIsOpen(false);
+  }
 
   if (!user) return null;
 
@@ -100,7 +108,9 @@ export default function UserSidebar() {
             </div>
           )}
         </div>
+        <Button variant="outline" className="w-full" onClick={goToSettings}>Edit Settings</Button>
       </SheetContent>
     </Sheet>
   );
 }
+

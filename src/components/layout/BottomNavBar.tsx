@@ -9,6 +9,7 @@ import {
   Bell,
   ShieldAlert,
   Video,
+  Settings,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import UserSidebar from "./UserSidebar";
