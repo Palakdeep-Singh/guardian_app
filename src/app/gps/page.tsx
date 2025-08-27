@@ -72,13 +72,17 @@ export default function GpsPage() {
              toast({ variant: 'destructive', title: "No Location", description: "Could not get your location to share."})
         }
     };
+
+    const displayMap = useMemo(() => (
+      location ? <Map location={location} /> : <div className="flex items-center justify-center h-full bg-muted"><p>Loading Map...</p></div>
+    ), [location]);
     
   return (
     <div className="p-4 space-y-4">
       <Card>
         <CardContent className="p-0">
           <div className="relative w-full h-64 rounded-t-lg overflow-hidden">
-            <Map location={location} />
+            {displayMap}
           </div>
         </CardContent>
         <div className="p-4 border-t">
