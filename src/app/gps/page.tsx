@@ -1,13 +1,22 @@
+
 'use client';
 import Image from "next/image";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Route, MapPin, Share2, TrendingUp, Wind } from "lucide-react";
-import { useState, useEffect } from "react";
+import { Route, MapPin, Share2, TrendingUp, Wind, StopCircle } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { useAuth } from "@/hooks/use-auth";
+import { useToast } from "@/hooks/use-toast";
+import { addLocation } from "@/services/firestore";
 
 export default function GpsPage() {
+    const { user } = useAuth();
+    const { toast } = useToast();
     const [speed, setSpeed] = useState(45);
     const [heading, setHeading] = useState("NW");
+    const [isRecording, setIsRecording] = useState(false);
+    const [location, setLocation] = useState<{ latitude: number, longitude: number } | null>(null);
+    const locationIntervalRef = useRef<NodeJS.Timeout | null>(null);
     const headings = ["N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE", "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW"];
 
     useEffect(() => {
@@ -15,9 +24,48 @@ export default function GpsPage() {
             setSpeed(prev => Math.max(0, prev + Math.floor((Math.random() - 0.4) * 5)));
             setHeading(headings[Math.floor(Math.random() * headings.length)]);
         }, 3000);
-        return () => clearInterval(interval);
-    }, []);
 
+        const watchId = navigator.geolocation.watchPosition(
+          (position) => {
+            const { latitude, longitude } = position.coords;
+            setLocation({ latitude, longitude });
+            if (isRecording && user) {
+              addLocation(user.uid, { latitude, longitude });
+            }
+          },
+          (error) => {
+            console.error("Geolocation error:", error);
+            toast({ variant: 'destructive', title: "GPS Error", description: "Could not get your location."})
+          },
+          { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+        );
+
+        return () => {
+            clearInterval(interval);
+            navigator.geolocation.clearWatch(watchId);
+        };
+    }, [isRecording, user, toast]);
+
+    const handleToggleRecording = () => {
+        setIsRecording(!isRecording);
+        toast({
+            title: isRecording ? 'Route Recording Stopped' : 'Route Recording Started',
+            description: isRecording ? 'Your route is no longer being recorded.' : 'Your route is now being recorded.',
+        });
+    };
+
+    const handleShareLocation = () => {
+        if (location) {
+            const url = `https://www.google.com/maps?q=${location.latitude},${location.longitude}`;
+            navigator.clipboard.writeText(url);
+            toast({
+                title: 'Location Shared',
+                description: 'A link to your current location has been copied to your clipboard.',
+            });
+        } else {
+             toast({ variant: 'destructive', title: "No Location", description: "Could not get your location to share."})
+        }
+    };
 
   return (
     <div className="p-4 space-y-4">
@@ -25,7 +73,7 @@ export default function GpsPage() {
         <CardContent className="p-0">
           <div className="relative w-full h-64">
             <Image
-              src="https://picsum.photos/800/600"
+              src={`https://picsum.photos/seed/${location?.latitude},${location?.longitude}/800/600`}
               alt="Map view of current location"
               fill
               className="object-cover rounded-t-lg"
@@ -37,7 +85,7 @@ export default function GpsPage() {
           <div className="flex justify-between items-center">
             <div>
               <p className="text-sm text-muted-foreground">Current Location</p>
-              <p className="font-semibold">123 Market St, San Francisco</p>
+              <p className="font-semibold">{location ? `${location.latitude.toFixed(4)}, ${location.longitude.toFixed(4)}` : 'Locating...'}</p>
             </div>
             <Button variant="outline" size="icon">
               <MapPin className="h-4 w-4" />
@@ -72,11 +120,11 @@ export default function GpsPage() {
           <CardTitle>Route Management</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
-          <Button className="w-full justify-start gap-2">
-            <Route className="h-4 w-4" />
-            Start Route Recording
+          <Button className="w-full justify-start gap-2" onClick={handleToggleRecording} variant={isRecording ? 'destructive' : 'default'}>
+            {isRecording ? <StopCircle className="h-4 w-4" /> : <Route className="h-4 w-4" />}
+            {isRecording ? 'Stop Route Recording' : 'Start Route Recording'}
           </Button>
-          <Button variant="secondary" className="w-full justify-start gap-2">
+          <Button variant="secondary" className="w-full justify-start gap-2" onClick={handleShareLocation}>
             <Share2 className="h-4 w-4" />
             Emergency Location Sharing
           </Button>
