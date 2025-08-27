@@ -75,19 +75,22 @@ const SettingsCard = ({ icon: Icon, title, description, children, onAdd, addText
 );
 
 const VehicleCard = memo(({ vehicle, onSave, onDelete }: { vehicle: Vehicle; onSave: (v: Vehicle) => Promise<void>; onDelete: (id: string) => Promise<void>; }) => {
-  const [isEditing, setIsEditing] = useState(!vehicle.id);
-  const [isSaving, setIsSaving] = useState(false);
+  const [isEditing, setIsEditing] = useState(!vehicle.id.startsWith('temp-'));
   const [name, setName] = useState(vehicle.name);
   const [model, setModel] = useState(vehicle.model);
   const [numberPlate, setNumberPlate] = useState(vehicle.numberPlate);
 
   const handleSave = async () => {
-    setIsSaving(true);
+    const originalState = { name: vehicle.name, model: vehicle.model, numberPlate: vehicle.numberPlate };
+    setIsEditing(false); // Optimistic UI update
     try {
       await onSave({ ...vehicle, name, model, numberPlate });
-      setIsEditing(false);
-    } finally {
-      setIsSaving(false);
+    } catch (error) {
+      // Revert on failure
+      setName(originalState.name);
+      setModel(originalState.model);
+      setNumberPlate(originalState.numberPlate);
+      setIsEditing(true);
     }
   };
   
@@ -107,9 +110,8 @@ const VehicleCard = memo(({ vehicle, onSave, onDelete }: { vehicle: Vehicle; onS
           </div>
           <div className="flex justify-between">
             {isEditing ? (
-                 <Button size="sm" className="gap-2" onClick={handleSave} disabled={isSaving}>
-                    {isSaving ? <Loader2 className="animate-spin" /> : <Save />}
-                    {isSaving ? 'Saving...' : 'Save'}
+                 <Button size="sm" className="gap-2" onClick={handleSave}>
+                    <Save /> Save
                  </Button>
             ) : (
                 <Button variant="secondary" size="sm" className="gap-2" onClick={() => setIsEditing(true)}><Edit /> Edit</Button>
@@ -124,18 +126,20 @@ const VehicleCard = memo(({ vehicle, onSave, onDelete }: { vehicle: Vehicle; onS
 VehicleCard.displayName = 'VehicleCard';
 
 const ContactCard = memo(({ contact, onSave, onDelete }: { contact: Contact; onSave: (c: Contact) => Promise<void>; onDelete: (id: string) => Promise<void>; }) => {
-  const [isEditing, setIsEditing] = useState(!contact.id);
-  const [isSaving, setIsSaving] = useState(false);
+  const [isEditing, setIsEditing] = useState(!contact.id.startsWith('temp-'));
   const [name, setName] = useState(contact.name);
   const [phone, setPhone] = useState(contact.phone);
 
   const handleSave = async () => {
-    setIsSaving(true);
+    const originalState = { name: contact.name, phone: contact.phone };
+    setIsEditing(false); // Optimistic UI update
     try {
       await onSave({ ...contact, name, phone });
-      setIsEditing(false);
-    } finally {
-      setIsSaving(false);
+    } catch (error) {
+      // Revert on failure
+      setName(originalState.name);
+      setPhone(originalState.phone);
+      setIsEditing(true);
     }
   };
 
@@ -151,9 +155,8 @@ const ContactCard = memo(({ contact, onSave, onDelete }: { contact: Contact; onS
       </div>
       <div className="flex justify-between">
         {isEditing ? (
-            <Button size="sm" className="gap-2" onClick={handleSave} disabled={isSaving}>
-                {isSaving ? <Loader2 className="animate-spin" /> : <Save />}
-                {isSaving ? 'Saving...' : 'Save'}
+            <Button size="sm" className="gap-2" onClick={handleSave}>
+                <Save /> Save
             </Button>
         ) : (
             <Button variant="secondary" size="sm" className="gap-2" onClick={() => setIsEditing(true)}><Edit /> Edit</Button>
@@ -175,7 +178,6 @@ export default function SettingsPage() {
   const { theme, setTheme } = useTheme();
 
   const [profile, setProfile] = useState<Partial<UserProfile>>({ name: '' });
-  const [isProfileSaving, setIsProfileSaving] = useState(false);
   const [isProfileSaved, setIsProfileSaved] = useState(true);
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [contacts, setContacts] = useState<Contact[]>([]);
@@ -200,15 +202,16 @@ export default function SettingsPage() {
 
   const handleProfileSave = async () => {
     if (!user) return;
-    setIsProfileSaving(true);
+    const originalProfile = { ...profile };
+    setIsProfileSaved(true); // Optimistic update
+
     try {
       await updateUserProfile(user.uid, profile);
       toast({ title: 'Profile Updated', description: 'Your profile has been saved.' });
-      setIsProfileSaved(true);
     } catch (error) {
+      setProfile(originalProfile);
+      setIsProfileSaved(false);
       toast({ variant: 'destructive', title: 'Error', description: 'Could not update profile.' });
-    } finally {
-        setIsProfileSaving(false);
     }
   };
   
@@ -218,37 +221,47 @@ export default function SettingsPage() {
   }
 
   const handleAddVehicle = () => {
-    const tempId = `temp-${Date.now()}`;
-    const newVehicle: Vehicle = { id: tempId, name: 'New Vehicle', model: '', numberPlate: '' };
-    setVehicles(prev => [...prev, newVehicle]);
-
-    if (!user) return;
-    addVehicle(user.uid, { name: newVehicle.name, model: newVehicle.model, numberPlate: newVehicle.numberPlate })
-      .then(addedVehicle => {
-        setVehicles(prev => prev.map(v => v.id === tempId ? addedVehicle : v));
-        toast({ title: 'Vehicle Added' });
-      })
-      .catch(() => {
-        setVehicles(prev => prev.filter(v => v.id !== tempId));
-        toast({ variant: 'destructive', title: 'Error', description: 'Could not add vehicle.' });
-      });
+    setVehicles(prev => [...prev, { id: `temp-${Date.now()}`, name: '', model: '', numberPlate: '' }]);
   };
 
   const handleVehicleSave = useCallback(async (vehicle: Vehicle) => {
     if(!user) return;
-    const originalVehicles = vehicles;
-    setVehicles(prev => prev.map(v => v.id === vehicle.id ? vehicle : v));
-    try {
-      await updateVehicle(user.uid, vehicle.id, vehicle);
-      toast({ title: 'Vehicle Updated' });
-    } catch (error) {
-      setVehicles(originalVehicles);
-      toast({ variant: 'destructive', title: 'Error', description: 'Could not update vehicle.' });
+    
+    // If it's a new vehicle (temp ID)
+    if (vehicle.id.startsWith('temp-')) {
+        const originalVehicles = vehicles;
+        try {
+            const { id: _, ...newVehicleData } = vehicle;
+            const addedVehicle = await addVehicle(user.uid, newVehicleData);
+            setVehicles(prev => prev.map(v => v.id === vehicle.id ? addedVehicle : v));
+            toast({ title: 'Vehicle Added' });
+        } catch (error) {
+            setVehicles(originalVehicles);
+            toast({ variant: 'destructive', title: 'Error', description: 'Could not add vehicle.' });
+            throw error;
+        }
+    } else { // It's an existing vehicle
+        const originalVehicles = vehicles;
+        setVehicles(prev => prev.map(v => v.id === vehicle.id ? vehicle : v));
+        try {
+          await updateVehicle(user.uid, vehicle.id, vehicle);
+          toast({ title: 'Vehicle Updated' });
+        } catch (error) {
+          setVehicles(originalVehicles);
+          toast({ variant: 'destructive', title: 'Error', description: 'Could not update vehicle.' });
+          throw error;
+        }
     }
   }, [user, vehicles, toast]);
 
   const handleVehicleDelete = useCallback(async (id: string) => {
     if (!user) return;
+
+    if (id.startsWith('temp-')) {
+        setVehicles(prev => prev.filter(v => v.id !== id));
+        return;
+    }
+
     const originalVehicles = vehicles;
     setVehicles(prev => prev.filter(v => v.id !== id));
     try {
@@ -261,37 +274,46 @@ export default function SettingsPage() {
   }, [user, vehicles, toast]);
 
   const handleAddContact = () => {
-    if (!user) return;
-    const tempId = `temp-${Date.now()}`;
-    const newContact: Contact = { id: tempId, name: 'New Contact', phone: '' };
-    setContacts(prev => [...prev, newContact]);
-
-    addContact(user.uid, { name: newContact.name, phone: newContact.phone })
-      .then(addedContact => {
-        setContacts(prev => prev.map(c => c.id === tempId ? addedContact : c));
-        toast({ title: 'Contact Added' });
-      })
-      .catch(() => {
-         setContacts(prev => prev.filter(c => c.id !== tempId));
-         toast({ variant: 'destructive', title: 'Error', description: 'Could not add contact.' });
-      });
+    setContacts(prev => [...prev, { id: `temp-${Date.now()}`, name: '', phone: '' }]);
   };
   
   const handleContactSave = useCallback(async (contact: Contact) => {
     if(!user) return;
-    const originalContacts = contacts;
-    setContacts(prev => prev.map(c => c.id === contact.id ? contact : c));
-    try {
-      await updateContact(user.uid, contact.id, contact);
-      toast({ title: 'Contact Updated' });
-    } catch (error) {
-      setContacts(originalContacts);
-      toast({ variant: 'destructive', title: 'Error', description: 'Could not update contact.' });
+
+    if (contact.id.startsWith('temp-')) {
+        const originalContacts = contacts;
+        try {
+            const { id: _, ...newContactData } = contact;
+            const addedContact = await addContact(user.uid, newContactData);
+            setContacts(prev => prev.map(c => c.id === contact.id ? addedContact : c));
+            toast({ title: 'Contact Added' });
+        } catch (error) {
+            setContacts(originalContacts);
+            toast({ variant: 'destructive', title: 'Error', description: 'Could not add contact.' });
+            throw error;
+        }
+    } else {
+        const originalContacts = contacts;
+        setContacts(prev => prev.map(c => c.id === contact.id ? contact : c));
+        try {
+          await updateContact(user.uid, contact.id, contact);
+          toast({ title: 'Contact Updated' });
+        } catch (error) {
+          setContacts(originalContacts);
+          toast({ variant: 'destructive', title: 'Error', description: 'Could not update contact.' });
+          throw error;
+        }
     }
   }, [user, contacts, toast]);
 
   const handleContactDelete = useCallback(async (id: string) => {
     if (!user) return;
+    
+    if (id.startsWith('temp-')) {
+        setContacts(prev => prev.filter(c => c.id !== id));
+        return;
+    }
+
     const originalContacts = contacts;
     setContacts(prev => prev.filter(c => c.id !== id));
     try {
@@ -371,9 +393,9 @@ export default function SettingsPage() {
             <Label htmlFor="email">Email</Label>
             <Input id="email" type="email" value={user.email ?? ''} disabled />
           </div>
-          <Button onClick={handleProfileSave} disabled={isProfileSaving || isProfileSaved}>
-            {isProfileSaving ? <Loader2 className="animate-spin" /> : (isProfileSaved ? <Check /> : <Save />)}
-            {isProfileSaving ? 'Saving...' : (isProfileSaved ? 'Saved' : 'Save Profile')}
+          <Button onClick={handleProfileSave} disabled={isProfileSaved}>
+            {isProfileSaved ? <Check /> : <Save />}
+            {isProfileSaved ? 'Saved' : 'Save Profile'}
           </Button>
           </div>
       </SettingsCard>
