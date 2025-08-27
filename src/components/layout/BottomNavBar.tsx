@@ -1,3 +1,4 @@
+
 "use client";
 
 import Link from "next/link";
@@ -8,9 +9,9 @@ import {
   Bell,
   ShieldAlert,
   Video,
-  Settings,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import UserSidebar from "./UserSidebar";
 
 const navItems = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
@@ -18,7 +19,6 @@ const navItems = [
   { href: "/gps", label: "GPS", icon: Map },
   { href: "/alerts", label: "Alerts", icon: Bell },
   { href: "/emergency", label: "Emergency", icon: ShieldAlert },
-  { href: "/settings", label: "Settings", icon: Settings },
 ];
 
 export default function BottomNavBar() {
@@ -45,6 +45,7 @@ export default function BottomNavBar() {
             </Link>
           );
         })}
+        <UserSidebar />
       </div>
     </nav>
   );
