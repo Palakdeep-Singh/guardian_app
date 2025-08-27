@@ -3,23 +3,12 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Route, MapPin, Share2, TrendingUp, Wind, StopCircle } from "lucide-react";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { addLocation } from "@/services/firestore";
-import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
-import L from 'leaflet';
-
-// Fix for default icon issue with Leaflet and Webpack
-const icon = L.icon({
-    iconUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png",
-    shadowUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
-    iconSize: [25, 41],
-    iconAnchor: [12, 41],
-    popupAnchor: [1, -34],
-    shadowSize: [41, 41]
-});
+import dynamic from 'next/dynamic';
 
 export default function GpsPage() {
     const { user } = useAuth();
@@ -78,6 +67,18 @@ export default function GpsPage() {
              toast({ variant: 'destructive', title: "No Location", description: "Could not get your location to share."})
         }
     };
+    
+    const Map = useMemo(
+        () =>
+          dynamic(
+            () => import('@/components/map/Map'),
+            {
+              loading: () => <p>A map is loading</p>,
+              ssr: false,
+            }
+          ),
+        []
+      );
 
   return (
     <div className="p-4 space-y-4">
@@ -85,17 +86,7 @@ export default function GpsPage() {
         <CardContent className="p-0">
           <div className="relative w-full h-64 rounded-t-lg overflow-hidden">
             {location ? (
-                <MapContainer center={[location.latitude, location.longitude]} zoom={15} style={{ height: '100%', width: '100%' }}>
-                    <TileLayer
-                        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                    />
-                    <Marker position={[location.latitude, location.longitude]} icon={icon}>
-                        <Popup>
-                            You are here.
-                        </Popup>
-                    </Marker>
-                </MapContainer>
+                <Map location={location} />
             ) : <div className="flex items-center justify-center h-full">Loading Map...</div>}
           </div>
         </CardContent>
