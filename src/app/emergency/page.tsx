@@ -69,7 +69,7 @@ export default function EmergencyPage() {
     try {
       const location = await new Promise<{ latitude: number, longitude: number }>((resolve, reject) => {
         navigator.geolocation.getCurrentPosition(
-          (pos) => resolve(pos.coords),
+          (pos) => resolve({ latitude: pos.coords.latitude, longitude: pos.coords.longitude }),
           (err) => reject(err),
           { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
         )
