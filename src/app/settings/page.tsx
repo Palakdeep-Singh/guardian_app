@@ -74,7 +74,7 @@ const SettingsCard = ({ icon: Icon, title, description, children, onAdd, addText
     </Card>
 );
 
-const VehicleCard = memo(({ vehicle, onSave, onDelete }: { vehicle: Vehicle; onSave: (v: Vehicle) => Promise<void>; onDelete: (id: string) => void; }) => {
+const VehicleCard = memo(({ vehicle, onSave, onDelete }: { vehicle: Vehicle; onSave: (v: Vehicle) => Promise<void>; onDelete: (id: string) => Promise<void>; }) => {
   const [isEditing, setIsEditing] = useState(!vehicle.id);
   const [isSaving, setIsSaving] = useState(false);
   const [name, setName] = useState(vehicle.name);
@@ -123,7 +123,7 @@ const VehicleCard = memo(({ vehicle, onSave, onDelete }: { vehicle: Vehicle; onS
 });
 VehicleCard.displayName = 'VehicleCard';
 
-const ContactCard = memo(({ contact, onSave, onDelete }: { contact: Contact; onSave: (c: Contact) => Promise<void>; onDelete: (id: string) => void; }) => {
+const ContactCard = memo(({ contact, onSave, onDelete }: { contact: Contact; onSave: (c: Contact) => Promise<void>; onDelete: (id: string) => Promise<void>; }) => {
   const [isEditing, setIsEditing] = useState(!contact.id);
   const [isSaving, setIsSaving] = useState(false);
   const [name, setName] = useState(contact.name);
@@ -217,68 +217,88 @@ export default function SettingsPage() {
       setIsProfileSaved(false);
   }
 
-  const handleAddVehicle = async () => {
+  const handleAddVehicle = () => {
+    const tempId = `temp-${Date.now()}`;
+    const newVehicle: Vehicle = { id: tempId, name: 'New Vehicle', model: '', numberPlate: '' };
+    setVehicles(prev => [...prev, newVehicle]);
+
     if (!user) return;
-    const newVehicle: Omit<Vehicle, 'id'> = { name: 'New Vehicle', model: '', numberPlate: '' };
-    try {
-      const addedVehicle = await addVehicle(user.uid, newVehicle);
-      setVehicles([...vehicles, addedVehicle]);
-      toast({ title: 'Vehicle Added' });
-    } catch (error) {
-      toast({ variant: 'destructive', title: 'Error', description: 'Could not add vehicle.' });
-    }
+    addVehicle(user.uid, { name: newVehicle.name, model: newVehicle.model, numberPlate: newVehicle.numberPlate })
+      .then(addedVehicle => {
+        setVehicles(prev => prev.map(v => v.id === tempId ? addedVehicle : v));
+        toast({ title: 'Vehicle Added' });
+      })
+      .catch(() => {
+        setVehicles(prev => prev.filter(v => v.id !== tempId));
+        toast({ variant: 'destructive', title: 'Error', description: 'Could not add vehicle.' });
+      });
   };
 
   const handleVehicleSave = useCallback(async (vehicle: Vehicle) => {
     if(!user) return;
+    const originalVehicles = vehicles;
+    setVehicles(prev => prev.map(v => v.id === vehicle.id ? vehicle : v));
     try {
       await updateVehicle(user.uid, vehicle.id, vehicle);
       toast({ title: 'Vehicle Updated' });
     } catch (error) {
+      setVehicles(originalVehicles);
       toast({ variant: 'destructive', title: 'Error', description: 'Could not update vehicle.' });
     }
-  }, [user, toast]);
+  }, [user, vehicles, toast]);
 
   const handleVehicleDelete = useCallback(async (id: string) => {
     if (!user) return;
+    const originalVehicles = vehicles;
+    setVehicles(prev => prev.filter(v => v.id !== id));
     try {
       await deleteVehicle(user.uid, id);
-      setVehicles(vehicles.filter(v => v.id !== id));
       toast({ title: 'Vehicle Removed' });
     } catch (error) {
+      setVehicles(originalVehicles);
       toast({ variant: 'destructive', title: 'Error', description: 'Could not remove vehicle.' });
     }
   }, [user, vehicles, toast]);
 
-  const handleAddContact = async () => {
+  const handleAddContact = () => {
     if (!user) return;
-    const newContact: Omit<Contact, 'id'> = { name: 'New Contact', phone: '' };
-     try {
-      const addedContact = await addContact(user.uid, newContact);
-      setContacts([...contacts, addedContact]);
-      toast({ title: 'Contact Added' });
-    } catch (error) {
-      toast({ variant: 'destructive', title: 'Error', description: 'Could not add contact.' });
-    }
+    const tempId = `temp-${Date.now()}`;
+    const newContact: Contact = { id: tempId, name: 'New Contact', phone: '' };
+    setContacts(prev => [...prev, newContact]);
+
+    addContact(user.uid, { name: newContact.name, phone: newContact.phone })
+      .then(addedContact => {
+        setContacts(prev => prev.map(c => c.id === tempId ? addedContact : c));
+        toast({ title: 'Contact Added' });
+      })
+      .catch(() => {
+         setContacts(prev => prev.filter(c => c.id !== tempId));
+         toast({ variant: 'destructive', title: 'Error', description: 'Could not add contact.' });
+      });
   };
   
   const handleContactSave = useCallback(async (contact: Contact) => {
     if(!user) return;
+    const originalContacts = contacts;
+    setContacts(prev => prev.map(c => c.id === contact.id ? contact : c));
     try {
       await updateContact(user.uid, contact.id, contact);
       toast({ title: 'Contact Updated' });
     } catch (error) {
+      setContacts(originalContacts);
       toast({ variant: 'destructive', title: 'Error', description: 'Could not update contact.' });
     }
-  }, [user, toast]);
+  }, [user, contacts, toast]);
 
   const handleContactDelete = useCallback(async (id: string) => {
     if (!user) return;
+    const originalContacts = contacts;
+    setContacts(prev => prev.filter(c => c.id !== id));
     try {
       await deleteContact(user.uid, id);
-      setContacts(contacts.filter(c => c.id !== id));
       toast({ title: 'Contact Removed' });
     } catch (error) {
+      setContacts(originalContacts);
       toast({ variant: 'destructive', title: 'Error', description: 'Could not remove contact.' });
     }
   }, [user, contacts, toast]);
