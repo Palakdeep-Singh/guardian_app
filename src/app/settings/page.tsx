@@ -23,6 +23,7 @@ import {
   Check,
   Edit,
   Save,
+  Loader2,
 } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import { useRouter } from 'next/navigation';
@@ -75,13 +76,19 @@ const SettingsCard = ({ icon: Icon, title, description, children, onAdd, addText
 
 const VehicleCard = memo(({ vehicle, onSave, onDelete }: { vehicle: Vehicle; onSave: (v: Vehicle) => Promise<void>; onDelete: (id: string) => void; }) => {
   const [isEditing, setIsEditing] = useState(!vehicle.id);
+  const [isSaving, setIsSaving] = useState(false);
   const [name, setName] = useState(vehicle.name);
   const [model, setModel] = useState(vehicle.model);
   const [numberPlate, setNumberPlate] = useState(vehicle.numberPlate);
 
   const handleSave = async () => {
-    await onSave({ ...vehicle, name, model, numberPlate });
-    setIsEditing(false);
+    setIsSaving(true);
+    try {
+      await onSave({ ...vehicle, name, model, numberPlate });
+      setIsEditing(false);
+    } finally {
+      setIsSaving(false);
+    }
   };
   
   return (
@@ -100,7 +107,10 @@ const VehicleCard = memo(({ vehicle, onSave, onDelete }: { vehicle: Vehicle; onS
           </div>
           <div className="flex justify-between">
             {isEditing ? (
-                 <Button size="sm" className="gap-2" onClick={handleSave}><Save /> Save</Button>
+                 <Button size="sm" className="gap-2" onClick={handleSave} disabled={isSaving}>
+                    {isSaving ? <Loader2 className="animate-spin" /> : <Save />}
+                    {isSaving ? 'Saving...' : 'Save'}
+                 </Button>
             ) : (
                 <Button variant="secondary" size="sm" className="gap-2" onClick={() => setIsEditing(true)}><Edit /> Edit</Button>
             )}
@@ -115,12 +125,18 @@ VehicleCard.displayName = 'VehicleCard';
 
 const ContactCard = memo(({ contact, onSave, onDelete }: { contact: Contact; onSave: (c: Contact) => Promise<void>; onDelete: (id: string) => void; }) => {
   const [isEditing, setIsEditing] = useState(!contact.id);
+  const [isSaving, setIsSaving] = useState(false);
   const [name, setName] = useState(contact.name);
   const [phone, setPhone] = useState(contact.phone);
 
   const handleSave = async () => {
-    await onSave({ ...contact, name, phone });
-    setIsEditing(false);
+    setIsSaving(true);
+    try {
+      await onSave({ ...contact, name, phone });
+      setIsEditing(false);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -135,7 +151,10 @@ const ContactCard = memo(({ contact, onSave, onDelete }: { contact: Contact; onS
       </div>
       <div className="flex justify-between">
         {isEditing ? (
-            <Button size="sm" className="gap-2" onClick={handleSave}><Save /> Save</Button>
+            <Button size="sm" className="gap-2" onClick={handleSave} disabled={isSaving}>
+                {isSaving ? <Loader2 className="animate-spin" /> : <Save />}
+                {isSaving ? 'Saving...' : 'Save'}
+            </Button>
         ) : (
             <Button variant="secondary" size="sm" className="gap-2" onClick={() => setIsEditing(true)}><Edit /> Edit</Button>
         )}
@@ -156,6 +175,7 @@ export default function SettingsPage() {
   const { theme, setTheme } = useTheme();
 
   const [profile, setProfile] = useState<Partial<UserProfile>>({ name: '' });
+  const [isProfileSaving, setIsProfileSaving] = useState(false);
   const [isProfileSaved, setIsProfileSaved] = useState(true);
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [contacts, setContacts] = useState<Contact[]>([]);
@@ -180,12 +200,15 @@ export default function SettingsPage() {
 
   const handleProfileSave = async () => {
     if (!user) return;
+    setIsProfileSaving(true);
     try {
       await updateUserProfile(user.uid, profile);
       toast({ title: 'Profile Updated', description: 'Your profile has been saved.' });
       setIsProfileSaved(true);
     } catch (error) {
       toast({ variant: 'destructive', title: 'Error', description: 'Could not update profile.' });
+    } finally {
+        setIsProfileSaving(false);
     }
   };
   
@@ -328,9 +351,9 @@ export default function SettingsPage() {
             <Label htmlFor="email">Email</Label>
             <Input id="email" type="email" value={user.email ?? ''} disabled />
           </div>
-          <Button onClick={handleProfileSave} disabled={isProfileSaved}>
-            {isProfileSaved ? <Check className="h-4 w-4 mr-2"/> : <Save className="h-4 w-4 mr-2"/> }
-            {isProfileSaved ? 'Saved' : 'Save Profile'}
+          <Button onClick={handleProfileSave} disabled={isProfileSaving || isProfileSaved}>
+            {isProfileSaving ? <Loader2 className="animate-spin" /> : (isProfileSaved ? <Check /> : <Save />)}
+            {isProfileSaving ? 'Saving...' : (isProfileSaved ? 'Saved' : 'Save Profile')}
           </Button>
           </div>
       </SettingsCard>
@@ -354,4 +377,3 @@ export default function SettingsPage() {
     </div>
   );
 }
-
