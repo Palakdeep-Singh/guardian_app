@@ -9,8 +9,8 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
+  DropdownMenuGroup,
 } from '@/components/ui/dropdown-menu';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAuth } from '@/hooks/use-auth';
 import {
   getUserProfile,
@@ -21,7 +21,6 @@ import {
   Contact,
 } from '@/services/firestore';
 import { User, Car, Phone, Settings, LogOut } from 'lucide-react';
-import { Button } from '../ui/button';
 import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
 
@@ -80,13 +79,30 @@ export default function UserMenu() {
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
-        {vehicles.map(v => (
-            <DropdownMenuItem key={v.id} className="flex flex-col items-start gap-1 cursor-default hover:bg-transparent">
-                 <p className="font-semibold">{v.name} ({v.model})</p>
-                 <p className="text-xs text-muted-foreground">{v.numberPlate}</p>
-            </DropdownMenuItem>
-        ))}
-         {vehicles.length > 0 && <DropdownMenuSeparator />}
+        {vehicles.length > 0 && (
+          <>
+            <DropdownMenuLabel className="flex items-center gap-2 text-muted-foreground"><Car className="h-4 w-4" /> Vehicle</DropdownMenuLabel>
+            {vehicles.map(v => (
+                <DropdownMenuItem key={v.id} className="flex flex-col items-start gap-1 cursor-default hover:bg-transparent focus:bg-transparent">
+                     <p className="font-semibold">{v.name} ({v.model})</p>
+                     <p className="text-xs text-muted-foreground">{v.numberPlate}</p>
+                </DropdownMenuItem>
+            ))}
+            <DropdownMenuSeparator />
+          </>
+        )}
+         {contacts.length > 0 && (
+          <>
+            <DropdownMenuLabel className="flex items-center gap-2 text-muted-foreground"><Phone className="h-4 w-4" /> Contacts</DropdownMenuLabel>
+            {contacts.map(c => (
+                <DropdownMenuItem key={c.id} className="flex flex-col items-start gap-1 cursor-default hover:bg-transparent focus:bg-transparent">
+                     <p className="font-semibold">{c.name}</p>
+                     <p className="text-xs text-muted-foreground">{c.phone}</p>
+                </DropdownMenuItem>
+            ))}
+            <DropdownMenuSeparator />
+          </>
+        )}
         <DropdownMenuGroup>
           <DropdownMenuItem onClick={goToSettings}>
             <Settings className="mr-2 h-4 w-4" />
