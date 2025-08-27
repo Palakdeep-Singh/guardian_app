@@ -13,12 +13,12 @@ import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 import wav from 'wav';
 
-export const AudioInputSchema = z.object({
+const AudioInputSchema = z.object({
   text: z.string().describe("The text to convert to speech."),
 });
 export type AudioInput = z.infer<typeof AudioInputSchema>;
 
-export const AudioResponseSchema = z.object({
+const AudioResponseSchema = z.object({
   media: z.string().describe("The audio data URI in WAV format."),
 });
 export type AudioResponse = z.infer<typeof AudioResponseSchema>;

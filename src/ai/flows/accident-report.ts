@@ -11,13 +11,13 @@
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 
-export const AccidentReportInputSchema = z.object({
+const AccidentReportInputSchema = z.object({
   latitude: z.number().describe('The latitude of the accident.'),
   longitude: z.number().describe('The longitude of the accident.'),
 });
 export type AccidentReportInput = z.infer<typeof AccidentReportInputSchema>;
 
-export const AccidentReportSchema = z.object({
+const AccidentReportSchema = z.object({
     time: z.string().describe("The time of the accident in a human-readable format."),
     location: z.string().describe("A human-readable description of the accident location."),
     report: z.string().describe("A concise report of the accident."),
