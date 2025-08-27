@@ -3,7 +3,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Route, Share2, StopCircle } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import GpsDisplay from "@/components/gps/GpsDisplay";
@@ -12,6 +12,18 @@ export default function GpsPage() {
     const { user } = useAuth();
     const { toast } = useToast();
     const [isRecording, setIsRecording] = useState(false);
+
+    useEffect(() => {
+        const theftRecording = localStorage.getItem('theft-route-recording');
+        if (theftRecording === 'true') {
+            setIsRecording(true);
+            localStorage.removeItem('theft-route-recording');
+            toast({
+                title: 'Theft Detected',
+                description: 'Route recording has been automatically started.',
+            });
+        }
+    }, [toast]);
 
     const handleToggleRecording = () => {
         setIsRecording(!isRecording);

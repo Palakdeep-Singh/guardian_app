@@ -78,13 +78,14 @@ export default function EmergencyPage() {
       let report;
       switch(type) {
         case 'Accident':
-          report = await reportAccident(location);
+          report = await reportAccident({ latitude: location.latitude, longitude: location.longitude });
           break;
         case 'Theft':
-          report = await reportTheft(location);
-          break;
+            report = await reportTheft({ latitude: location.latitude, longitude: location.longitude });
+            localStorage.setItem('theft-route-recording', 'true');
+            break;
         case 'Medical':
-            report = await reportMedicalEmergency(location);
+            report = await reportMedicalEmergency({ latitude: location.latitude, longitude: location.longitude });
             break;
       }
       
