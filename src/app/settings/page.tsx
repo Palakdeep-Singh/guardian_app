@@ -75,49 +75,58 @@ const SettingsCard = ({ icon: Icon, title, description, children, onAdd, addText
 );
 
 const VehicleCard = memo(({ vehicle, onSave, onDelete }: { vehicle: Vehicle; onSave: (v: Vehicle) => Promise<void>; onDelete: (id: string) => Promise<void>; }) => {
-  const [isEditing, setIsEditing] = useState(!vehicle.id.startsWith('temp-'));
+  const [isEditing, setIsEditing] = useState(vehicle.id.startsWith('temp-'));
   const [name, setName] = useState(vehicle.name);
   const [model, setModel] = useState(vehicle.model);
   const [numberPlate, setNumberPlate] = useState(vehicle.numberPlate);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const handleSave = async () => {
-    const originalState = { name: vehicle.name, model: vehicle.model, numberPlate: vehicle.numberPlate };
-    setIsEditing(false); // Optimistic UI update
+    setIsSaving(true);
     try {
       await onSave({ ...vehicle, name, model, numberPlate });
-    } catch (error) {
-      // Revert on failure
-      setName(originalState.name);
-      setModel(originalState.model);
-      setNumberPlate(originalState.numberPlate);
-      setIsEditing(true);
+      setIsEditing(false);
+    } finally {
+      setIsSaving(false);
     }
   };
+
+  const handleDelete = async () => {
+      setIsDeleting(true);
+      try {
+        await onDelete(vehicle.id);
+      } finally {
+        setIsDeleting(false);
+      }
+  }
   
   return (
       <div className="p-4 border rounded-lg space-y-4">
           <div className="space-y-2">
               <Label htmlFor={`vehicle-name-${vehicle.id}`}>Vehicle Name</Label>
-              <Input id={`vehicle-name-${vehicle.id}`} value={name} onChange={(e) => setName(e.target.value)} disabled={!isEditing} />
+              <Input id={`vehicle-name-${vehicle.id}`} value={name} onChange={(e) => setName(e.target.value)} disabled={!isEditing || isSaving} />
           </div>
           <div className="space-y-2">
               <Label htmlFor={`vehicle-model-${vehicle.id}`}>Model</Label>
-              <Input id={`vehicle-model-${vehicle.id}`} value={model} onChange={(e) => setModel(e.target.value)} disabled={!isEditing} />
+              <Input id={`vehicle-model-${vehicle.id}`} value={model} onChange={(e) => setModel(e.target.value)} disabled={!isEditing || isSaving} />
           </div>
           <div className="space-y-2">
               <Label htmlFor={`vehicle-plate-${vehicle.id}`}>Number Plate</Label>
-              <Input id={`vehicle-plate-${vehicle.id}`} value={numberPlate} onChange={(e) => setNumberPlate(e.target.value)} disabled={!isEditing} />
+              <Input id={`vehicle-plate-${vehicle.id}`} value={numberPlate} onChange={(e) => setNumberPlate(e.target.value)} disabled={!isEditing || isSaving} />
           </div>
           <div className="flex justify-between">
             {isEditing ? (
-                 <Button size="sm" className="gap-2" onClick={handleSave}>
-                    <Save /> Save
+                 <Button size="sm" className="gap-2" onClick={handleSave} disabled={isSaving}>
+                    {isSaving ? <Loader2 className="animate-spin" /> : <Save />}
+                    {isSaving ? 'Saving...' : 'Save'}
                  </Button>
             ) : (
                 <Button variant="secondary" size="sm" className="gap-2" onClick={() => setIsEditing(true)}><Edit /> Edit</Button>
             )}
-            <Button variant="destructive" size="sm" className="gap-2" onClick={() => onDelete(vehicle.id)}>
-                <Trash2 /> Remove
+            <Button variant="destructive" size="sm" className="gap-2" onClick={handleDelete} disabled={isDeleting}>
+                {isDeleting ? <Loader2 className="animate-spin" /> : <Trash2 />}
+                {isDeleting ? 'Removing...' : 'Remove'}
             </Button>
           </div>
       </div>
@@ -126,43 +135,54 @@ const VehicleCard = memo(({ vehicle, onSave, onDelete }: { vehicle: Vehicle; onS
 VehicleCard.displayName = 'VehicleCard';
 
 const ContactCard = memo(({ contact, onSave, onDelete }: { contact: Contact; onSave: (c: Contact) => Promise<void>; onDelete: (id: string) => Promise<void>; }) => {
-  const [isEditing, setIsEditing] = useState(!contact.id.startsWith('temp-'));
+  const [isEditing, setIsEditing] = useState(contact.id.startsWith('temp-'));
   const [name, setName] = useState(contact.name);
   const [phone, setPhone] = useState(contact.phone);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+
 
   const handleSave = async () => {
-    const originalState = { name: contact.name, phone: contact.phone };
-    setIsEditing(false); // Optimistic UI update
+    setIsSaving(true);
     try {
       await onSave({ ...contact, name, phone });
-    } catch (error) {
-      // Revert on failure
-      setName(originalState.name);
-      setPhone(originalState.phone);
-      setIsEditing(true);
+      setIsEditing(false);
+    } finally {
+      setIsSaving(false);
     }
   };
+
+  const handleDelete = async () => {
+      setIsDeleting(true);
+      try {
+        await onDelete(contact.id);
+      } finally {
+        setIsDeleting(false);
+      }
+  }
 
   return (
     <div className="p-4 border rounded-lg space-y-4">
       <div className="space-y-2">
         <Label htmlFor={`contact-name-${contact.id}`}>Contact Name</Label>
-        <Input id={`contact-name-${contact.id}`} value={name} onChange={(e) => setName(e.target.value)} disabled={!isEditing} />
+        <Input id={`contact-name-${contact.id}`} value={name} onChange={(e) => setName(e.target.value)} disabled={!isEditing || isSaving} />
       </div>
       <div className="space-y-2">
         <Label htmlFor={`contact-phone-${contact.id}`}>Phone Number</Label>
-        <Input id={`contact-phone-${contact.id}`} type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} disabled={!isEditing} />
+        <Input id={`contact-phone-${contact.id}`} type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} disabled={!isEditing || isSaving} />
       </div>
       <div className="flex justify-between">
         {isEditing ? (
-            <Button size="sm" className="gap-2" onClick={handleSave}>
-                <Save /> Save
+            <Button size="sm" className="gap-2" onClick={handleSave} disabled={isSaving}>
+                {isSaving ? <Loader2 className="animate-spin" /> : <Save />}
+                {isSaving ? 'Saving...' : 'Save'}
             </Button>
         ) : (
             <Button variant="secondary" size="sm" className="gap-2" onClick={() => setIsEditing(true)}><Edit /> Edit</Button>
         )}
-        <Button variant="destructive" size="sm" className="gap-2" onClick={() => onDelete(contact.id)}>
-            <Trash2 /> Remove
+        <Button variant="destructive" size="sm" className="gap-2" onClick={handleDelete} disabled={isDeleting}>
+            {isDeleting ? <Loader2 className="animate-spin" /> : <Trash2 />}
+            {isDeleting ? 'Removing...' : 'Remove'}
         </Button>
       </div>
     </div>
@@ -179,6 +199,7 @@ export default function SettingsPage() {
 
   const [profile, setProfile] = useState<Partial<UserProfile>>({ name: '' });
   const [isProfileSaved, setIsProfileSaved] = useState(true);
+  const [isSavingProfile, setIsSavingProfile] = useState(false);
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [contacts, setContacts] = useState<Contact[]>([]);
 
@@ -202,16 +223,17 @@ export default function SettingsPage() {
 
   const handleProfileSave = async () => {
     if (!user) return;
+    setIsSavingProfile(true);
     const originalProfile = { ...profile };
-    setIsProfileSaved(true); // Optimistic update
-
     try {
       await updateUserProfile(user.uid, profile);
+      setIsProfileSaved(true);
       toast({ title: 'Profile Updated', description: 'Your profile has been saved.' });
     } catch (error) {
       setProfile(originalProfile);
-      setIsProfileSaved(false);
       toast({ variant: 'destructive', title: 'Error', description: 'Could not update profile.' });
+    } finally {
+        setIsSavingProfile(false);
     }
   };
   
@@ -227,21 +249,22 @@ export default function SettingsPage() {
   const handleVehicleSave = useCallback(async (vehicle: Vehicle) => {
     if(!user) return;
     
-    // If it's a new vehicle (temp ID)
     if (vehicle.id.startsWith('temp-')) {
-        const originalVehicles = vehicles;
+        const originalVehicles = [...vehicles];
+        const tempId = vehicle.id;
         try {
             const { id: _, ...newVehicleData } = vehicle;
+            setVehicles(prev => prev.map(v => v.id === tempId ? {...vehicle, id: 'saving...' } : v));
             const addedVehicle = await addVehicle(user.uid, newVehicleData);
-            setVehicles(prev => prev.map(v => v.id === vehicle.id ? addedVehicle : v));
+            setVehicles(prev => prev.map(v => v.id === 'saving...' ? addedVehicle : v));
             toast({ title: 'Vehicle Added' });
         } catch (error) {
             setVehicles(originalVehicles);
             toast({ variant: 'destructive', title: 'Error', description: 'Could not add vehicle.' });
             throw error;
         }
-    } else { // It's an existing vehicle
-        const originalVehicles = vehicles;
+    } else {
+        const originalVehicles = [...vehicles];
         setVehicles(prev => prev.map(v => v.id === vehicle.id ? vehicle : v));
         try {
           await updateVehicle(user.uid, vehicle.id, vehicle);
@@ -262,7 +285,7 @@ export default function SettingsPage() {
         return;
     }
 
-    const originalVehicles = vehicles;
+    const originalVehicles = [...vehicles];
     setVehicles(prev => prev.filter(v => v.id !== id));
     try {
       await deleteVehicle(user.uid, id);
@@ -281,11 +304,13 @@ export default function SettingsPage() {
     if(!user) return;
 
     if (contact.id.startsWith('temp-')) {
-        const originalContacts = contacts;
+        const originalContacts = [...contacts];
+        const tempId = contact.id;
         try {
             const { id: _, ...newContactData } = contact;
+            setContacts(prev => prev.map(c => c.id === tempId ? { ...contact, id: 'saving...' } : c));
             const addedContact = await addContact(user.uid, newContactData);
-            setContacts(prev => prev.map(c => c.id === contact.id ? addedContact : c));
+            setContacts(prev => prev.map(c => c.id === 'saving...' ? addedContact : c));
             toast({ title: 'Contact Added' });
         } catch (error) {
             setContacts(originalContacts);
@@ -293,7 +318,7 @@ export default function SettingsPage() {
             throw error;
         }
     } else {
-        const originalContacts = contacts;
+        const originalContacts = [...contacts];
         setContacts(prev => prev.map(c => c.id === contact.id ? contact : c));
         try {
           await updateContact(user.uid, contact.id, contact);
@@ -314,7 +339,7 @@ export default function SettingsPage() {
         return;
     }
 
-    const originalContacts = contacts;
+    const originalContacts = [...contacts];
     setContacts(prev => prev.filter(c => c.id !== id));
     try {
       await deleteContact(user.uid, id);
@@ -393,9 +418,9 @@ export default function SettingsPage() {
             <Label htmlFor="email">Email</Label>
             <Input id="email" type="email" value={user.email ?? ''} disabled />
           </div>
-          <Button onClick={handleProfileSave} disabled={isProfileSaved}>
-            {isProfileSaved ? <Check /> : <Save />}
-            {isProfileSaved ? 'Saved' : 'Save Profile'}
+          <Button onClick={handleProfileSave} disabled={isProfileSaved || isSavingProfile}>
+            {isSavingProfile ? <Loader2 className="animate-spin"/> : (isProfileSaved ? <Check /> : <Save />)}
+            {isSavingProfile ? 'Saving...' : (isProfileSaved ? 'Saved' : 'Save Profile')}
           </Button>
           </div>
       </SettingsCard>

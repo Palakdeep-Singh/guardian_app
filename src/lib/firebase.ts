@@ -17,7 +17,11 @@ const firebaseConfig = {
 
 // Initialize Firebase
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
-const db = getFirestore(app);
+
+const db = initializeFirestore(app, {
+  localCache: { kind: 'persistent' }
+});
+
 
 // Enable offline persistence
 try {
