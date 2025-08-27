@@ -19,6 +19,7 @@ import {
 } from 'firebase/auth';
 import { app } from '@/lib/firebase';
 import { useRouter, usePathname } from 'next/navigation';
+import { updateUserProfile } from '@/services/firestore';
 
 const auth = getAuth(app);
 
@@ -65,8 +66,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return signInWithEmailAndPassword(auth, email, pass);
   }, []);
 
-  const signup = useCallback((email: string, pass:string) => {
-    return createUserWithEmailAndPassword(auth, email, pass);
+  const signup = useCallback(async (email: string, pass:string) => {
+    const userCredential = await createUserWithEmailAndPassword(auth, email, pass);
+    const user = userCredential.user;
+    if (user) {
+      await updateUserProfile(user.uid, { email: user.email || '', name: user.email?.split('@')[0] || '' });
+    }
+    return userCredential;
   }, []);
 
   const logout = useCallback(() => {
