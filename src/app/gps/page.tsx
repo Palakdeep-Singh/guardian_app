@@ -7,96 +7,19 @@ import { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { addLocation } from "@/services/firestore";
-import { GoogleMap, useJsApiLoader, Marker } from '@react-google-maps/api';
+import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import 'leaflet/dist/leaflet.css';
+import L from 'leaflet';
 
-const containerStyle = {
-  width: '100%',
-  height: '100%',
-};
-
-const mapOptions = {
-    styles: [
-        { elementType: 'geometry', stylers: [{ color: '#242f3e' }] },
-        { elementType: 'labels.text.stroke', stylers: [{ color: '#242f3e' }] },
-        { elementType: 'labels.text.fill', stylers: [{ color: '#746855' }] },
-        {
-            featureType: 'administrative.locality',
-            elementType: 'labels.text.fill',
-            stylers: [{ color: '#d59563' }],
-        },
-        {
-            featureType: 'poi',
-            elementType: 'labels.text.fill',
-            stylers: [{ color: '#d59563' }],
-        },
-        {
-            featureType: 'poi.park',
-            elementType: 'geometry',
-            stylers: [{ color: '#263c3f' }],
-        },
-        {
-            featureType: 'poi.park',
-            elementType: 'labels.text.fill',
-            stylers: [{ color: '#6b9a76' }],
-        },
-        {
-            featureType: 'road',
-            elementType: 'geometry',
-            stylers: [{ color: '#38414e' }],
-        },
-        {
-            featureType: 'road',
-            elementType: 'geometry.stroke',
-            stylers: [{ color: '#212a37' }],
-        },
-        {
-            featureType: 'road',
-            elementType: 'labels.text.fill',
-            stylers: [{ color: '#9ca5b3' }],
-        },
-        {
-            featureType: 'road.highway',
-            elementType: 'geometry',
-            stylers: [{ color: '#746855' }],
-        },
-        {
-            featureType: 'road.highway',
-            elementType: 'geometry.stroke',
-            stylers: [{ color: '#1f2835' }],
-        },
-        {
-            featureType: 'road.highway',
-            elementType: 'labels.text.fill',
-            stylers: [{ color: '#f3d19c' }],
-        },
-        {
-            featureType: 'transit',
-            elementType: 'geometry',
-            stylers: [{ color: '#2f3948' }],
-        },
-        {
-            featureType: 'transit.station',
-            elementType: 'labels.text.fill',
-            stylers: [{ color: '#d59563' }],
-        },
-        {
-            featureType: 'water',
-            elementType: 'geometry',
-            stylers: [{ color: '#17263c' }],
-        },
-        {
-            featureType: 'water',
-            elementType: 'labels.text.fill',
-            stylers: [{ color: '#515c6d' }],
-        },
-        {
-            featureType: 'water',
-            elementType: 'labels.text.stroke',
-            stylers: [{ color: '#17263c' }],
-        },
-    ],
-    disableDefaultUI: true,
-};
+// Fix for default icon issue with Leaflet and Webpack
+const icon = L.icon({
+    iconUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png",
+    shadowUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
+    iconSize: [25, 41],
+    iconAnchor: [12, 41],
+    popupAnchor: [1, -34],
+    shadowSize: [41, 41]
+});
 
 export default function GpsPage() {
     const { user } = useAuth();
@@ -108,11 +31,6 @@ export default function GpsPage() {
     const locationIntervalRef = useRef<NodeJS.Timeout | null>(null);
     const headings = ["N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE", "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW"];
     
-    const { isLoaded } = useJsApiLoader({
-        id: 'google-map-script',
-        googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || ""
-      })
-
     useEffect(() => {
         const interval = setInterval(() => {
             setSpeed(prev => Math.max(0, prev + Math.floor((Math.random() - 0.4) * 5)));
@@ -150,7 +68,7 @@ export default function GpsPage() {
 
     const handleShareLocation = () => {
         if (location) {
-            const url = `https://www.google.com/maps?q=${location.latitude},${location.longitude}`;
+            const url = `https://www.openstreetmap.org/?mlat=${location.latitude}&mlon=${location.longitude}#map=16/${location.latitude}/${location.longitude}`;
             navigator.clipboard.writeText(url);
             toast({
                 title: 'Location Shared',
@@ -166,16 +84,19 @@ export default function GpsPage() {
       <Card>
         <CardContent className="p-0">
           <div className="relative w-full h-64 rounded-t-lg overflow-hidden">
-            {isLoaded && location ? (
-                <GoogleMap
-                    mapContainerStyle={containerStyle}
-                    center={{ lat: location.latitude, lng: location.longitude }}
-                    zoom={15}
-                    options={mapOptions}
-                >
-                    <Marker position={{ lat: location.latitude, lng: location.longitude }} />
-                </GoogleMap>
-            ) : <div>Loading Map...</div>}
+            {location ? (
+                <MapContainer center={[location.latitude, location.longitude]} zoom={15} style={{ height: '100%', width: '100%' }}>
+                    <TileLayer
+                        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                    />
+                    <Marker position={[location.latitude, location.longitude]} icon={icon}>
+                        <Popup>
+                            You are here.
+                        </Popup>
+                    </Marker>
+                </MapContainer>
+            ) : <div className="flex items-center justify-center h-full">Loading Map...</div>}
           </div>
         </CardContent>
         <div className="p-4 border-t">
